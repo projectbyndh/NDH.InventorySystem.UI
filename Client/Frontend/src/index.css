@@ -1,68 +1,98 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@theme {
+  --color-primary-100: #ECF0FF;
+  --color-primary-200: #CCE0FF;
+  --color-primary-300: #99C2FF;
+  --color-primary-400: #64A3FF;
+  --color-primary-500: #3385FF;
+  --color-primary-600: #0066FF;
+  --color-primary-700: #0052CC;
+  --color-primary-800: #003D99;
+  --color-primary-900: #002966;
+  --color-primary-1000: #001433; /* Provided in original */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* Secondary colors */
+  --color-secondary-100: #F0E6FF;
+  --color-secondary-200: #E0CCFF;
+  --color-secondary-300: #C299FF;
+  --color-secondary-400: #A366FF;
+  --color-secondary-500: #8533FF;
+  --color-secondary-600: #6600FF;
+  --color-secondary-700: #5200CC;
+  --color-secondary-800: #3D0099;
+  --color-secondary-900: #290066;
+  --color-secondary-1000: #140033; /* Provided in original */
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  /* Neutral White */
+  --color-neutral-white-100: #FFFFFF;
+  --color-neutral-white-200: #FAFAFA;
+  --color-neutral-white-300: #F5F5F5;
+  --color-neutral-white-400: #F0F0F0;
+  --color-neutral-white-500: #E6E6E6;
+  --color-neutral-white-600: #D9D9D9;
+  --color-neutral-white-700: #CCCCCC;
+  --color-neutral-white-800: #BFBFBF;
+  --color-neutral-white-900: #A6A6A6;
+  --color-neutral-white-1000: #8C8C8C; /* Estimated: darker gray */
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  /* Neutral Black */
+  --color-neutral-black-100: #808080;
+  --color-neutral-black-200: #666666;
+  --color-neutral-black-300: #4D4D4D;
+  --color-neutral-black-400: #333333;
+  --color-neutral-black-500: #1A1A1A;
+  --color-neutral-black-600: #141414;
+  --color-neutral-black-700: #0D0D0D;
+  --color-neutral-black-800: #070707;
+  --color-neutral-black-900: #040404;
+  --color-neutral-black-1000: #000000; /* Provided in original */
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+  /* Error */
+  --color-error-100: #FFE2DA;
+  --color-error-200: #FFC5BC;
+  --color-error-300: #FF949C;
+  --color-error-400: #FF837D;
+  --color-error-500: #F5515D;
+  --color-error-600: #E03A3E;
+  --color-error-700: #D63339;
+  --color-error-800: #B71F28;
+  --color-error-900: #87000D;
+  --color-error-1000: #470000; /* Provided in original */
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
+  /* Success */
+  --color-success-100: #DDFFDA;
+  --color-success-200: #B9FABE;
+  --color-success-300: #99E5A0;
+  --color-success-400: #78D182;
+  --color-success-500: #54BC64;
+  --color-success-600: #28A745;
+  --color-success-700: #20CE3F;
+  --color-success-800: #00852D;
+  --color-success-900: #005D0D;
+  --color-success-1000: #002900; /* Provided in original */
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+  /* Warning */
+  --color-warning-100: #FFF4C1;
+  --color-warning-200: #FFE7A9;
+  --color-warning-300: #FFE78D;
+  --color-warning-400: #FFC770;
+  --color-warning-500: #FEB650;
+  --color-warning-600: #F5A623;
+  --color-warning-700: #E99417;
+  --color-warning-800: #C78100;
+  --color-warning-900: #8F5400;
+  --color-warning-1000: #471B00; /* Provided in original */
+
+  /* Information */
+  --color-information-100: #C2FFFF;
+  --color-information-200: #B5F5FF;
+  --color-information-300: #94E0EF;
+  --color-information-400: #73CDDD;
+  --color-information-500: #4EB6CA;
+  --color-information-600: #17A2B8;
+  --color-information-700: #00AABD;
+  --color-information-800: #008194;
+  --color-information-900: #00596A;
+  --color-information-1000: #002833; /* Provided in original */
 }
