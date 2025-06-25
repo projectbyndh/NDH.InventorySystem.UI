@@ -1,0 +1,16 @@
+{
+  "Desktop": {
+    "$type": "grid",
+    "$value": [
+      {
+        "pattern": "columns",
+        "visible": true,
+        "alignment": "stretch",
+        "color": "#1aa6f180",
+        "gutterSize": "20px",
+        "count": 12,
+        "offset": "20px"
+      }
+    ]
+  }
+}

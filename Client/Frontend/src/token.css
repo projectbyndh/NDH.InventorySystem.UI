@@ -1,0 +1,60 @@
+/* Text Utilities */
+.text-primary-base { color: var(--color-neutral-black-500); }
+.text-primary-subtle { color: var(--color-neutral-black-400); }
+.text-disabled { color: var(--color-neutral-black-200); }
+.text-secondary-base { color: var(--color-secondary-800); }
+.text-white-base { color: var(--color-neutral-white-100); }
+.text-white-subtle { color: var(--color-neutral-white-300); }
+.text-error-base { color: var(--color-error-600); }
+.text-error-critical { color: var(--color-error-800); }
+.text-success-base { color: var(--color-success-600); }
+
+/* Background Utilities */
+.bg-accent-surface { background-color: var(--color-neutral-white-100); }
+.bg-accent-subtle { background-color: var(--color-neutral-white-300); }
+.bg-primary-surface { background-color: var(--color-primary-100); }
+.bg-primary-bold { background-color: var(--color-primary-600); }
+.bg-secondary-surface { background-color: var(--color-secondary-200); }
+.bg-secondary-hover { background-color: var(--color-secondary-300); }
+.bg-error-surface { background-color: var(--color-error-100); }
+.bg-success-surface { background-color: var(--color-success-100); }
+
+/* Border Utilities */
+.border-primary-strong { border-color: var(--color-neutral-black-500); }
+.border-primary-subtle { border-color: var(--color-neutral-black-300); }
+.border-primary-disabled { border-color: var(--color-neutral-white-1000); }
+.border-primary-active { border-color: var(--color-primary-500); }
+.border-secondary-default { border-color: var(--color-secondary-700); }
+.border-error-default { border-color: var(--color-error-500); }
+
+/* Accent Utilities */
+.accent-primary-default { color: var(--color-primary-500); }
+.accent-primary-hover { color: var(--color-primary-600); }
+.accent-error-default { color: var(--color-error-600); }
+
+/* Link Utilities */
+.link-primary-default { color: var(--color-primary-500); }
+.link-primary-hover { color: var(--color-primary-700); }
+.link-primary-visited { color: var(--color-primary-400); }
+
+/* Icon Utilities */
+.icon-primary-default { color: var(--color-neutral-black-500); }
+.icon-primary-hover { color: var(--color-neutral-black-400); }
+.icon-white-default { color: var(--color-neutral-white-100); }
+.icon-white-subtle { color: var(--color-neutral-white-300); }
+.icon-disabled { color: var(--color-neutral-black-200); }
+.icon-secondary-default { color: var(--color-primary-500); }
+.icon-error-default { color: var(--color-error-600); }
+.icon-success-default { color: var(--color-success-600); }
+
+/* Button Utilities */
+.button-primary-default { background-color: var(--color-primary-500); }
+.button-primary-hover { background-color: var(--color-primary-800); }
+.button-primary-active { background-color: var(--color-primary-600); }
+.button-white-default { background-color: var(--color-neutral-white-100); }
+.button-white-hover { background-color: var(--color-neutral-white-500); }
+.button-white-active { background-color: var(--color-neutral-white-300); }
+.button-disabled { background-color: var(--color-neutral-white-1000); }
+.button-secondary-default { background-color: var(--color-secondary-800); }
+.button-error-default { background-color: var(--color-error-600); }
+.button-success-default { background-color: var(--color-success-600); }

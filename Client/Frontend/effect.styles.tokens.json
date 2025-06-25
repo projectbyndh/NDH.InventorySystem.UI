@@ -1,0 +1,45 @@
+{
+  "Shadow XS": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "offsetX": "0px",
+        "offsetY": "1px",
+        "blur": "2px",
+        "spread": "0px",
+        "color": "#000000"
+      }
+    ]
+  },
+  "Inner Shadow XS": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "offsetX": "0px",
+        "offsetY": "1px",
+        "blur": "2px",
+        "spread": "0px",
+        "color": "#000000",
+        "inset": true
+      }
+    ]
+  },
+  "Blur XS": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "layerBlur": true,
+        "blur": "2px"
+      }
+    ]
+  },
+  "Layer Blur XS": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "layerBlur": true,
+        "blur": "2px"
+      }
+    ]
+  }
+}

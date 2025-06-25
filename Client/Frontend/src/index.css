@@ -1,6 +1,67 @@
 @import "tailwindcss";
+@import "../src/token.css";
+@import "../src/text.css";
+@import "../src/spacing.css";
+
 
 @theme {
+  /* Font Families */
+  --font-inter: "Inter", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+
+  /* Spacing Values */
+  --spacing-0: 0px;
+  --spacing-50: 2px;
+  --spacing-100: 4px;
+  --spacing-200: 8px;
+  --spacing-300: 12px;
+  --spacing-400: 16px;
+  --spacing-500: 20px;
+  --spacing-600: 24px;
+  --spacing-700: 28px;
+  --spacing-800: 32px;
+  --spacing-900: 36px;
+  --spacing-1000: 40px;
+  --spacing-1100: 44px;
+  --spacing-1200: 48px;
+  --spacing-1400: 56px;
+  --spacing-1600: 64px;
+  --spacing-2000: 80px;
+  --spacing-2400: 96px;
+  --spacing-2800: 112px;
+  --spacing-3200: 128px;
+  --spacing-xxx-large: 36px;
+  --spacing-none: 0px;
+  --spacing-sm-2: 4px;
+  --spacing-md-2: 8px;
+  --spacing-lg-2: 12px;
+  --spacing-xl-2: 16px;
+  --spacing-full: 9999px;
+
+  /* Radius Values */
+  --radius-none: 0px;
+  --radius-xxs: 2px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-l: 16px;
+  --radius-xl: 20px;
+  --radius-xxl: 24px;
+  --radius-circle: 999px;
+
+  /* Border Width Values */
+  --border-none: 0px;
+  --border-sm: 0.5px;
+  --border-md: 1px;
+  --border-lg: 2px;
+
+  /* Opacity Values (as percentages) */
+  --opacity-full: 1; /* 100% */
+  --opacity-semi: 0.8; /* 80% */
+  --opacity-half: 0.5; /* 50% */
+  --opacity-low: 0.2; /* 20% */
+
+  /* Existing color variables */
   --color-primary-100: #ECF0FF;
   --color-primary-200: #CCE0FF;
   --color-primary-300: #99C2FF;
@@ -10,7 +71,7 @@
   --color-primary-700: #0052CC;
   --color-primary-800: #003D99;
   --color-primary-900: #002966;
-  --color-primary-1000: #001433; /* Provided in original */
+  --color-primary-1000: #001433;
 
   /* Secondary colors */
   --color-secondary-100: #F0E6FF;
@@ -22,7 +83,7 @@
   --color-secondary-700: #5200CC;
   --color-secondary-800: #3D0099;
   --color-secondary-900: #290066;
-  --color-secondary-1000: #140033; /* Provided in original */
+  --color-secondary-1000: #140033;
 
   /* Neutral White */
   --color-neutral-white-100: #FFFFFF;
@@ -34,7 +95,7 @@
   --color-neutral-white-700: #CCCCCC;
   --color-neutral-white-800: #BFBFBF;
   --color-neutral-white-900: #A6A6A6;
-  --color-neutral-white-1000: #8C8C8C; /* Estimated: darker gray */
+  --color-neutral-white-1000: #8C8C8C;
 
   /* Neutral Black */
   --color-neutral-black-100: #808080;
@@ -46,7 +107,7 @@
   --color-neutral-black-700: #0D0D0D;
   --color-neutral-black-800: #070707;
   --color-neutral-black-900: #040404;
-  --color-neutral-black-1000: #000000; /* Provided in original */
+  --color-neutral-black-1000: #000000;
 
   /* Error */
   --color-error-100: #FFE2DA;
@@ -58,7 +119,7 @@
   --color-error-700: #D63339;
   --color-error-800: #B71F28;
   --color-error-900: #87000D;
-  --color-error-1000: #470000; /* Provided in original */
+  --color-error-1000: #470000;
 
   /* Success */
   --color-success-100: #DDFFDA;
@@ -70,7 +131,7 @@
   --color-success-700: #20CE3F;
   --color-success-800: #00852D;
   --color-success-900: #005D0D;
-  --color-success-1000: #002900; /* Provided in original */
+  --color-success-1000: #002900;
 
   /* Warning */
   --color-warning-100: #FFF4C1;
@@ -82,7 +143,7 @@
   --color-warning-700: #E99417;
   --color-warning-800: #C78100;
   --color-warning-900: #8F5400;
-  --color-warning-1000: #471B00; /* Provided in original */
+  --color-warning-1000: #471B00;
 
   /* Information */
   --color-information-100: #C2FFFF;
@@ -94,5 +155,5 @@
   --color-information-700: #00AABD;
   --color-information-800: #008194;
   --color-information-900: #00596A;
-  --color-information-1000: #002833; /* Provided in original */
+  --color-information-1000: #002833;
 }
