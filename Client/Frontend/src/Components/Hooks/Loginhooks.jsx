@@ -12,17 +12,25 @@ const useLoginHooks = () => {
     setError(null);
     try {
       const response = await loginUser(credentials);
-      if (response.data.success) {
-        setAuth(response.data.user, response.data.token);
+      console.log("Raw response data:", response.data); // Debug the raw data
+
+      const data = response.data;
+      if (data._statusCode === "OK" && data._message === "Login Successful") {
+        const user = { id: data._data.userId }; // Adjust user object as needed
+        const token = data._data.refreshToken;
+        setAuth(user, token);
+        return data; // Return data for further use if needed
       } else {
-        throw new Error(response.data.message || "Login failed");
+        throw new Error(data._message || "Login failed due to unexpected response");
       }
     } catch (err) {
       setError(
-        err.response?.data?.message ||
+        err.response?.data?._message ||
         err.message ||
         "An error occurred during login"
       );
+      console.error("Login error details:", err); // Debug error details
+      throw err; // Re-throw to be caught in handleSubmit
     } finally {
       setLoading(false);
     }

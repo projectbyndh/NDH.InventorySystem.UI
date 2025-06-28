@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useLoginHooks from "../Hooks/Loginhooks";
 import useLoginStore from "../Store/Loginstore";
@@ -12,12 +12,18 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/dashboard");
+    }
+  }, [isLoggedIn, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login({ userEmail: email, password });
-
-    if (useLoginStore.getState().isLoggedIn) {
-      navigate("/dashboard");
+    try {
+      await login({ userEmail: email, password });
+    } catch (err) {
+      console.error("HandleSubmit error:", err);
     }
   };
 
@@ -36,15 +42,12 @@ const LoginPage = () => {
 
       {isLoggedIn ? (
         <p style={{ textAlign: "center", color: "green" }}>
-          Welcome, {user?.name}!
+          Welcome, {user?.id || "User"}!
         </p>
       ) : (
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: "15px" }}>
-            <label
-              htmlFor="email"
-              style={{ display: "block", marginBottom: "5px" }}
-            >
+            <label htmlFor="email" style={{ display: "block", marginBottom: "5px" }}>
               Email:
             </label>
             <input
@@ -53,19 +56,12 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{
-                width: "100%",
-                padding: "8px",
-                boxSizing: "border-box",
-              }}
+              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
             />
           </div>
 
           <div style={{ marginBottom: "15px" }}>
-            <label
-              htmlFor="password"
-              style={{ display: "block", marginBottom: "5px" }}
-            >
+            <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>
               Password:
             </label>
             <input
@@ -74,11 +70,7 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: "100%",
-                padding: "8px",
-                boxSizing: "border-box",
-              }}
+              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
             />
           </div>
 
@@ -99,13 +91,7 @@ const LoginPage = () => {
           </button>
 
           {error && (
-            <p
-              style={{
-                color: "red",
-                marginTop: "10px",
-                textAlign: "center",
-              }}
-            >
+            <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
               {error}
             </p>
           )}

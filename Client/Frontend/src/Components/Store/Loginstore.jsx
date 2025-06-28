@@ -6,6 +6,7 @@ const useLoginStore = create((set) => ({
   isLoggedIn: false,
 
   setAuth: (user, token) => {
+    localStorage.setItem("refreshToken", token);
     set({
       user,
       token,
@@ -14,6 +15,7 @@ const useLoginStore = create((set) => ({
   },
 
   logout: () => {
+    localStorage.removeItem("refreshToken");
     set({
       user: null,
       token: null,
