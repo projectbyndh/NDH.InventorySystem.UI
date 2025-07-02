@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Bell,
   Box,
@@ -22,6 +22,14 @@ const menuItems = [
 ];
 
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Perform logout actions (e.g., clear tokens)
+    localStorage.removeItem('authToken'); // Example
+    navigate('/login');
+  };
+
   return (
     <div className="flex h-screen w-64 flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out lg:w-64 md:w-20 sm:w-16 xs:w-0">
       <div className="p-4 flex items-center border-b border-gray-200">
@@ -52,19 +60,15 @@ function Sidebar() {
       </div>
 
       <div className="p-2 border-t border-gray-200">
-        <NavLink
-          to="/logout"
-          className={({ isActive }) =>
-            `flex items-center w-full text-gray-500 hover:text-gray-700 py-2 px-3 rounded hover:bg-gray-100 focus:outline-none ${
-              isActive ? 'text-white bg-blue-600' : ''
-            }`
-          }
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full text-gray-500 hover:text-gray-700 py-2 px-3 rounded hover:bg-gray-100 focus:outline-none"
         >
           <LogOut className="h-4 w-4 mr-2" />
           <span>Log out</span>
-        </NavLink>
+        </button>
         <div className="mt-2 px-2">
-          <p className="text-xs text-gray-500">Manandhar Store Pvt. Ltd.</p>
+          <p className="text-xs text-gray-500">NDH Pvt. Ltd.</p>
         </div>
       </div>
     </div>
