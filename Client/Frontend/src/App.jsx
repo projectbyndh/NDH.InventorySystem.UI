@@ -16,6 +16,7 @@ function App() {
           <Route path="master" element={<Master />} />
           <Route path="/dashboard" element={<Sidebar />} />
           <Route path="/moduledashboard" element={<Dashboard />} />
+          <Route path="/modulemaster" element={<Master />} />
         </Route>
       </Routes>
     </BrowserRouter>
