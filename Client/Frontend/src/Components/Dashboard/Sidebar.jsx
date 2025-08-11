@@ -12,12 +12,12 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Master', url: '/master', icon: Box },
-  { title: 'Transaction', url: '/transaction', icon: TrendingUp },
-  { title: 'Report', url: '/report', icon: FileText },
-  { title: 'Configuration', url: '/configuration', icon: Cog },
-  { title: 'Notification', url: '/notification', icon: Bell },
+  { title: 'Dashboard', url: '/moduledashboard', icon: LayoutDashboard },
+  { title: 'Master', url: '/modulemaster', icon: Box },
+  { title: 'Transaction', url: '/moduletransaction', icon: TrendingUp },
+  { title: 'Report', url: '/modulereport', icon: FileText },
+  { title: 'Configuration', url: '/moduleconfiguration', icon: Cog },
+  { title: 'Notification', url: '/modulenotification', icon: Bell },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
@@ -25,8 +25,7 @@ function Sidebar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Perform logout actions (e.g., clear tokens)
-    localStorage.removeItem('authToken'); // Example
+    localStorage.removeItem('authToken'); 
     navigate('/login');
   };
 
@@ -42,18 +41,22 @@ function Sidebar() {
         </div>
       </div>
 
-      <div className="flex-1 p-2 space-y-1 overflow-y-auto">
+      <div className="flex-1 p-2" style={{ maxHeight: 'calc(100vh - 120px)' }}>
         {menuItems.map((item) => (
           <NavLink
             key={item.title}
             to={item.url}
             className={({ isActive }) =>
-              `flex items-center w-full text-base font-normal ${
-                isActive ? 'text-white bg-blue-600' : 'text-gray-700'
-              } py-2 px-3 rounded hover:bg-gray-100 focus:outline-none`
+              `flex items-center  text-base font-normal rounded-lg py-2 px-3 ${
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              } focus:outline-none transition-colors`
             }
+            aria-label={`Navigate to ${item.title}`}
+            role="menuitem"
           >
-            <item.icon className="h-5 w-5 mr-2" />
+            <item.icon className="h-5 w-5 mr-3" />
             <span className="truncate">{item.title}</span>
           </NavLink>
         ))}
@@ -62,13 +65,15 @@ function Sidebar() {
       <div className="p-2 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className="flex items-center w-full text-gray-500 hover:text-gray-700 py-2 px-3 rounded hover:bg-gray-100 focus:outline-none"
+          className="flex items-center w-full text-gray-500 hover:text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-100  transition-colors"
+          aria-label="Logout"
+          role="button"
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className="h-4 w-4 mr-3" />
           <span>Log out</span>
         </button>
         <div className="mt-2 px-2">
-          <p className="text-xs text-gray-500">NDH Pvt. Ltd.</p>
+          <p className="text-xs text-gray-500 text-center">NDH Pvt. Ltd.</p>
         </div>
       </div>
     </div>
