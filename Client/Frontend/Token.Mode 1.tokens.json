@@ -8,6 +8,14 @@
       "$type": "color",
       "$value": "{Neutral_-_Black.Neutral_-_Black400}"
     },
+    "brand-base": {
+      "$type": "color",
+      "$value": "{Primary.Primary600}"
+    },
+    "brand-subtle": {
+      "$type": "color",
+      "$value": "{Primary.Primary400}"
+    },
     "text-disabled": {
       "$type": "color",
       "$value": "{Neutral_-_Black.Neutral_-_Black200}"
@@ -159,8 +167,6 @@
       "$value": "{Success.Success600}"
     }
   },
-
-  
   "button": {
     "primary-default": {
       "$type": "color",
@@ -195,6 +201,14 @@
       "$value": "{Secondary.Secondary800}"
     },
     "error-default": {
+      "$type": "color",
+      "$value": "{Error.Error500}"
+    },
+    "error-hover": {
+      "$type": "color",
+      "$value": "{Error.Error800}"
+    },
+    "error-active": {
       "$type": "color",
       "$value": "{Error.Error600}"
     },

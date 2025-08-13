@@ -1,4 +1,4 @@
-/* Text Utilities */
+/* Text Color Utilities */
 .text-primary-base { color: var(--color-neutral-black-500); }
 .text-primary-subtle { color: var(--color-neutral-black-400); }
 .text-disabled { color: var(--color-neutral-black-200); }

@@ -1,4 +1,4 @@
-/* Margin Utilities */
+/*  Margin Utilities */
 .m-0 { margin: var(--spacing-0); }
 .m-50 { margin: var(--spacing-50); }
 .m-100 { margin: var(--spacing-100); }
@@ -19,13 +19,7 @@
 .m-2400 { margin: var(--spacing-2400); }
 .m-2800 { margin: var(--spacing-2800); }
 .m-3200 { margin: var(--spacing-3200); }
-.m-xxx-large { margin: var(--spacing-xxx-large); }
-.m-none { margin: var(--spacing-none); }
-.m-sm-2 { margin: var(--spacing-sm-2); }
-.m-md-2 { margin: var(--spacing-md-2); }
-.m-lg-2 { margin: var(--spacing-lg-2); }
-.m-xl-2 { margin: var(--spacing-xl-2); }
-.m-full { margin: var(--spacing-full); }
+
 
 /* Padding Utilities */
 .p-0 { padding: var(--spacing-0); }
@@ -48,13 +42,6 @@
 .p-2400 { padding: var(--spacing-2400); }
 .p-2800 { padding: var(--spacing-2800); }
 .p-3200 { padding: var(--spacing-3200); }
-.p-xxx-large { padding: var(--spacing-xxx-large); }
-.p-none { padding: var(--spacing-none); }
-.p-sm-2 { padding: var(--spacing-sm-2); }
-.p-md-2 { padding: var(--spacing-md-2); }
-.p-lg-2 { padding: var(--spacing-lg-2); }
-.p-xl-2 { padding: var(--spacing-xl-2); }
-.p-full { padding: var(--spacing-full); }
 
 /* Border Radius Utilities */
 .rounded-none { border-radius: var(--radius-none); }
@@ -77,4 +64,4 @@
 .opacity-full { opacity: var(--opacity-full); }
 .opacity-semi { opacity: var(--opacity-semi); }
 .opacity-half { opacity: var(--opacity-half); }
-.opacity-low { opacity: var(--opacity-low); }
+.opacity-low { opacity: var(--opacity-low); } 
