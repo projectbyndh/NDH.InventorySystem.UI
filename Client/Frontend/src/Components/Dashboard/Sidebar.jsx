@@ -1,3 +1,4 @@
+// sidebar.jsx
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -18,62 +19,63 @@ const menuItems = [
   { title: 'Report', url: '/modulereport', icon: FileText },
   { title: 'Configuration', url: '/moduleconfiguration', icon: Cog },
   { title: 'Notification', url: '/modulenotification', icon: Bell },
-  { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
 function Sidebar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken'); 
+    localStorage.removeItem('authToken');
     navigate('/login');
   };
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out lg:w-64 md:w-20 sm:w-16 xs:w-0">
-      <div className="p-4 flex items-center border-b border-gray-200">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-          <Box className="h-6 w-6 text-white" />
-        </div>
-        <div className="flex flex-col ml-3">
-          <span className="text-sm font-semibold text-gray-900">NDH Inventory</span>
-          <span className="text-xs text-gray-500">System</span>
+<div class="absolute top-4 left-4 w-[260px] h-[960px] flex justify-between pt-[1px] pr-[3.33px] pb-[1px] pl-[3.33px] opacity-100 rotate-0 bg-gray-100 rounded-lg">      <div className="flex items-center justify-between p-[--spacing-200] border-b-[--border-md] border-[--color-neutral-black-300]">
+        <div className="flex items-center">
+          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-md bg-[--color-primary-600]">
+            <Box className="h-6 w-6 text-[--color-neutral-white-100]" />
+          </div>
+          <div className="flex flex-col ml-[--spacing-100]">
+            <span className="text-h3-semibold text-[--color-neutral-black-500]">NDH Inventory</span>
+            <span className="text-body-xsmall-regular text-[--color-neutral-black-400]">System</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 p-2" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+      <div className="flex-1 p-[--spacing-200] space-y-[--spacing-100]">
         {menuItems.map((item) => (
           <NavLink
             key={item.title}
             to={item.url}
             className={({ isActive }) =>
-              `flex items-center  text-base font-normal rounded-lg py-2 px-3 ${
+              `flex items-center text-body-large-regular rounded-md py-[--spacing-100] px-[--spacing-200] ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'text-[--color-neutral-white-100] bg-[--color-primary-500]'
+                  : 'text-[--color-neutral-black-500] hover:bg-[--color-neutral-white-300]'
               } focus:outline-none transition-colors`
             }
             aria-label={`Navigate to ${item.title}`}
             role="menuitem"
           >
-            <item.icon className="h-5 w-5 mr-3" />
+            <item.icon className="h-5 w-5 mr-[--spacing-100]" />
             <span className="truncate">{item.title}</span>
           </NavLink>
         ))}
       </div>
 
-      <div className="p-2 border-t border-gray-200">
+      <div className="p-[--spacing-200] border-t-[--border-md] border-[--color-neutral-black-300] space-y-[--spacing-200]">
+        <div className="text-body-medium-regular text-[--color-neutral-black-500]">Setting</div>
         <button
           onClick={handleLogout}
-          className="flex items-center w-full text-gray-500 hover:text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-100  transition-colors"
+          className="flex items-center w-full text-body-medium-regular text-[--color-neutral-black-500] hover:text-[--color-primary-500] py-[--spacing-100] px-[--spacing-200] rounded-md hover:bg-[--color-neutral-white-300] transition-colors"
           aria-label="Logout"
           role="button"
         >
-          <LogOut className="h-4 w-4 mr-3" />
+          <LogOut className="h-4 w-4 mr-[--spacing-100]" />
           <span>Log out</span>
         </button>
-        <div className="mt-2 px-2">
-          <p className="text-xs text-gray-500 text-center">NDH Pvt. Ltd.</p>
+        <div className="text-center">
+          <p className="text-body-xsmall-regular text-[--color-neutral-black-400]">NDH Pvt. Ltd.</p>
         </div>
       </div>
     </div>
