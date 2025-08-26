@@ -8,7 +8,10 @@ import { Sidebar } from "lucide-react";
 import Dashboard from "./Components/Dashboard/Dashboard";
 import Transactions from "./Components/Dashboard/Transactions";
 import AddProductForm from "./Components/Dashboard/Addproduct";
-
+import Report from "./Components/Dashboard/Report";
+import Setting from "./Components/Dashboard/Setting";
+import Notification from "./Components/Dashboard/Notification";
+import Configuration from "./Components/Dashboard/Configuration";
 function App() {
   return (
     <BrowserRouter>
@@ -21,7 +24,10 @@ function App() {
           <Route path="/modulemaster" element={<Master />} />
           <Route path="/moduletransaction" element={<Transactions />} />
           <Route path="/addproduct" element={<AddProductForm />} />
-
+          <Route path="/modulereport" element={<Report />} />
+          <Route path="/settings" element={<Setting />} />
+          <Route path="/modulenotification" element={<Notification />} />
+          <Route path="/moduleconfiguration" element={<Configuration />} />
         </Route>
       </Routes>
     </BrowserRouter>
