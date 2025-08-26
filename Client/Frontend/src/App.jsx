@@ -6,6 +6,8 @@ import Layout from "./Components/Dashboard/Layout";
 import Master from "./Components/Dashboard/Master";
 import { Sidebar } from "lucide-react";
 import Dashboard from "./Components/Dashboard/Dashboard";
+import Transactions from "./Components/Dashboard/Transactions";
+import AddProductForm from "./Components/Dashboard/Addproduct";
 
 function App() {
   return (
@@ -17,10 +19,13 @@ function App() {
           <Route path="/dashboard" element={<Sidebar />} />
           <Route path="/moduledashboard" element={<Dashboard />} />
           <Route path="/modulemaster" element={<Master />} />
+          <Route path="/moduletransaction" element={<Transactions />} />
+          <Route path="/addproduct" element={<AddProductForm />} />
+
         </Route>
       </Routes>
     </BrowserRouter>
-  );
+  )
 }
 
 export default App;
