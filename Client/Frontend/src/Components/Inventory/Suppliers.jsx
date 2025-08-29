@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 
 const required = <span className="text-red-500">*</span>;
@@ -38,6 +39,32 @@ function Input(props) {
   );
 }
 
+function Textarea(props) {
+  return (
+    <textarea
+      rows={3}
+      {...props}
+      className={
+        "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none transition " +
+        "placeholder:text-slate-400 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400"
+      }
+    />
+  );
+}
+
+function Chevron({ open }) {
+  return (
+    <svg
+      className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.17l3.71-2.94a.75.75 0 011.04 1.08l-4.24 3.36a.75.75 0 01-.94 0L5.21 8.31a.75.75 0 01.02-1.1z" />
+    </svg>
+  );
+}
+
 function Select({ value, onChange, options, placeholder = "Choose one", className = "" }) {
   const [open, setOpen] = useState(false);
   const ref = React.useRef(null);
@@ -64,14 +91,7 @@ function Select({ value, onChange, options, placeholder = "Choose one", classNam
         <span className={current ? "text-slate-900" : "text-slate-400"}>
           {current ? current.label : placeholder}
         </span>
-        <svg
-          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.17l3.71-2.94a.75.75 0 011.04 1.08l-4.24 3.36a.75.75 0 01-.94 0L5.21 8.31a.75.75 0 01.02-1.1z" />
-        </svg>
+        <Chevron open={open} />
       </button>
       {open && (
         <ul
@@ -101,26 +121,6 @@ function Select({ value, onChange, options, placeholder = "Choose one", classNam
   );
 }
 
-function Toggle({ checked, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-        checked ? "bg-slate-900" : "bg-slate-300"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
-          checked ? "translate-x-5" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-}
-
 function Collapsible({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -131,27 +131,19 @@ function Collapsible({ title, children, defaultOpen = false }) {
         className="w-full flex items-center justify-between px-4 py-2 text-left text-sm font-medium text-slate-700"
       >
         <span>{title}</span>
-        <svg
-          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.17l3.71-2.94a.75.75 0 011.04 1.08l-4.24 3.36a.75.75 0 01-.94 0L5.21 8.31a.75.75 0 01.02-1.1z" />
-        </svg>
+        <Chevron open={open} />
       </button>
       {open && <div className="p-4 pt-0">{children}</div>}
     </div>
   );
 }
 
-export default function UserProfileSettingsPage() {
-  const [language, setLanguage] = useState("");
-  const [notifications, setNotifications] = useState(true);
-  const languageOptions = [
-    { value: "en", label: "English" },
-    { value: "es", label: "Spanish" },
-    { value: "fr", label: "French" },
+export default function SuppliersPage() {
+  const [country, setCountry] = useState("");
+  const countryOptions = [
+    { value: "us", label: "United States" },
+    { value: "uk", label: "United Kingdom" },
+    { value: "in", label: "India" },
   ];
 
   return (
@@ -160,77 +152,57 @@ export default function UserProfileSettingsPage() {
       <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button className="hover:text-slate-900">← Back to Profile</button>
+            <button className="hover:text-slate-900">← Back to Supplier Management</button>
             <span className="text-slate-300">/</span>
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">Supplier Management</span>
             <span className="text-slate-300">/</span>
-            <span className="font-medium text-slate-900">Profile Settings</span>
+            <span className="font-medium text-slate-900">Add Supplier</span>
           </div>
           <div className="flex items-center gap-3">
-            <Collapsible title={<span className="text-sm font-medium">Additional Settings</span>} defaultOpen={false} />
+            <Collapsible title={<span className="text-sm font-medium">Additional Details</span>} defaultOpen={false} />
           </div>
         </div>
       </div>
 
       {/* Heading */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Profile Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Add Supplier</h1>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Left column */}
           <div className="lg:col-span-8 space-y-6">
-            <SectionCard
-              title="Personal Information"
-            >
+            <SectionCard title="Supplier Details">
               <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Full Name" required>
-                  <Input placeholder="e.g., John Doe" />
+                <Field label="Supplier Name" required>
+                  <Input placeholder="e.g., ABC Distributors" />
                 </Field>
-                <Field label="Email" required>
-                  <Input placeholder="e.g., john.doe@example.com" type="email" />
+                <Field label="Supplier Code">
+                  <Input placeholder="e.g., SUP123" />
                 </Field>
-                <Field label="Phone Number">
+                <Field label="Contact Email" required>
+                  <Input placeholder="e.g., contact@abcdistributors.com" type="email" />
+                </Field>
+                <Field label="Contact Phone">
                   <Input placeholder="e.g., +1 234 567 8900" type="tel" />
                 </Field>
-                <Field label="Language Preference">
+                <Field label="Country">
                   <Select
-                    options={languageOptions}
-                    value={language}
-                    onChange={setLanguage}
-                    placeholder="Choose language"
+                    options={countryOptions}
+                    value={country}
+                    onChange={setCountry}
+                    placeholder="Choose country"
                   />
                 </Field>
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Notification Settings"
-              right={
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-slate-700">Enable Notifications</span>
-                  <Toggle checked={notifications} onChange={setNotifications} />
+                <Field label="Address">
+                  <Input placeholder="e.g., 123 Main St, City" />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Notes" hint="e.g., Preferred supplier for snacks">
+                    <Textarea placeholder="Write any additional notes..." />
+                  </Field>
                 </div>
-              }
-            >
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Email Notifications">
-                  <Select
-                    options={[{ value: "all", label: "All" }, { value: "important", label: "Important Only" }, { value: "none", label: "None" }]}
-                    value=""
-                    onChange={() => {}}
-                    placeholder="Choose notification preference"
-                  />
-                </Field>
-                <Field label="SMS Notifications">
-                  <Select
-                    options={[{ value: "all", label: "All" }, { value: "important", label: "Important Only" }, { value: "none", label: "None" }]}
-                    value=""
-                    onChange={() => {}}
-                    placeholder="Choose notification preference"
-                  />
-                </Field>
               </div>
             </SectionCard>
 

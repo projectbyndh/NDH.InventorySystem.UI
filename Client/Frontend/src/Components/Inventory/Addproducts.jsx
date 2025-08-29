@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
+
 
 const required = <span className="text-red-500">*</span>;
 
@@ -64,19 +65,42 @@ function Chevron({ open }) {
   );
 }
 
-function Select({ value, onChange, options, placeholder = "Choose one", className = "" }) {
-  const [open, setOpen] = useState(false);
-  const ref = React.useRef(null);
+function Toggle({ checked, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+        checked ? "bg-slate-900" : "bg-slate-300"
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+          checked ? "translate-x-5" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
 
+function useOutsideClose(ref, onClose) {
   React.useEffect(() => {
     function onDoc(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) onClose();
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
+  }, [ref, onClose]);
+}
 
-  const current = React.useMemo(() => options.find((o) => o.value === value), [options, value]);
+function Select({ value, onChange, options, placeholder = "Choose one", className = "" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useOutsideClose(ref, () => setOpen(false));
+
+  const current = useMemo(() => options.find((o) => o.value === value), [options, value]);
 
   return (
     <div className={"relative " + className} ref={ref}>
@@ -137,12 +161,14 @@ function Collapsible({ title, children, defaultOpen = false }) {
   );
 }
 
-export default function UnitOfMeasurementPage() {
-  const [baseUnit, setBaseUnit] = useState("");
-  const baseUnitOptions = [
-    { value: "kg", label: "Kilogram (kg)" },
-    { value: "pcs", label: "Pieces (pcs)" },
-    { value: "ltr", label: "Liter (ltr)" },
+export default function AddProductPage() {
+  // form state (demo only)
+  const [vatIncl, setVatIncl] = useState(true);
+  const [discountMode, setDiscountMode] = useState("");
+  const discountOptions = [
+    { value: "discountable", label: "Discountable" },
+    { value: "discounted", label: "Discounted" },
+    { value: "non-discountable", label: "Non-Discountable" },
   ];
 
   return (
@@ -151,11 +177,11 @@ export default function UnitOfMeasurementPage() {
       <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button className="hover:text-slate-900">← Back to Unit Management</button>
+            <button className="hover:text-slate-900">← Back to Product Master</button>
             <span className="text-slate-300">/</span>
-            <span className="hidden sm:inline">Unit Management</span>
+            <span className="hidden sm:inline">Product Master</span>
             <span className="text-slate-300">/</span>
-            <span className="font-medium text-slate-900">Add Unit of Measurement</span>
+            <span className="font-medium text-slate-900">Add Product</span>
           </div>
           <div className="flex items-center gap-3">
             <Collapsible title={<span className="text-sm font-medium">Additional Details</span>} defaultOpen={false} />
@@ -165,7 +191,7 @@ export default function UnitOfMeasurementPage() {
 
       {/* Heading */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Add Unit of Measurement</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Add Product</h1>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
@@ -173,37 +199,95 @@ export default function UnitOfMeasurementPage() {
           {/* Left column */}
           <div className="lg:col-span-8 space-y-6">
             <SectionCard
-              title="Unit Details"
-              right={<button className="text-sm text-slate-700 hover:text-slate-900 flex items-center gap-2">+ Add Conversion</button>}
+              title="Basic Info"
+              right={<button className="text-sm text-slate-700 hover:text-slate-900 flex items-center gap-2">+ Add Stock Unit</button>}
             >
               <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Unit Name" required>
-                  <Input placeholder="e.g., Kilogram" />
+                <Field label="Product Name" required>
+                  <Input placeholder="e.g., Wai Wai" />
                 </Field>
-                <Field label="Unit Code" required>
-                  <Input placeholder="e.g., KG" />
+                <Field label="Product Code">
+                  <Input placeholder="e.g., 123455" />
                 </Field>
-                <Field label="Base Unit">
-                  <Select
-                    options={baseUnitOptions}
-                    value={baseUnit}
-                    onChange={setBaseUnit}
-                    placeholder="Choose base unit"
-                  />
+                <Field label="Stock Unit" required>
+                  <Select options={[
+                    { value: "pcs", label: "Pieces (pcs)" },
+                    { value: "box", label: "Box" },
+                  ]} value="" onChange={() => {}} placeholder="Choose product unit" />
                 </Field>
-                <Field label="Conversion Factor" hint="e.g., 1 if this is a base unit, or conversion to base unit">
-                  <Input placeholder="e.g., 1000 (for grams to kg)" inputMode="decimal" />
+                <Field label="Product Categories" required>
+                  <Select options={[
+                    { value: "grocery", label: "Grocery" },
+                    { value: "snacks", label: "Snacks" },
+                  ]} value="" onChange={() => {}} placeholder="Choose product categories" />
+                </Field>
+                <Field label="Sub Categories">
+                  <Select options={[
+                    { value: "noodles", label: "Noodles" },
+                    { value: "chips", label: "Chips" },
+                  ]} value="" onChange={() => {}} placeholder="Choose product sub categories" />
+                </Field>
+                <Field label="Product Type" required>
+                  <Select options={[
+                    { value: "regular", label: "Regular" },
+                    { value: "variant", label: "Variant" },
+                  ]} value="" onChange={() => {}} placeholder="Choose product type" />
                 </Field>
                 <div className="sm:col-span-2">
-                  <Field label="Description" hint="e.g., Standard unit for measuring weight">
-                    <Textarea placeholder="Write a description..." />
+                  <Field label="Short Description" hint="e.g., This product is generally used for children">
+                    <Textarea placeholder="Write a short description..." />
                   </Field>
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Pricing & Tax"
+              right={
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-slate-700">VAT Include</span>
+                  <Toggle checked={vatIncl} onChange={setVatIncl} />
+                </div>
+              }
+            >
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Purchase Price" required>
+                  <Input placeholder="e.g., 1230" inputMode="decimal" />
+                </Field>
+                <Field label="Discount Mode" required>
+                  <Select options={discountOptions} value={discountMode} onChange={setDiscountMode} placeholder="Choose one mode" />
+                </Field>
+                <Field label="Retail Price (excluding VAT)" required>
+                  <Input placeholder="e.g., 1234455" inputMode="decimal" />
+                </Field>
+                <div />
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Barcode Mapping" right={<button className="text-sm text-slate-700 hover:text-slate-900 flex items-center gap-2">⌄</button>}>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Barcode" required>
+                  <Input placeholder="e.g., 1230" />
+                </Field>
+                <Field label="Stock Unit">
+                  <Select options={[{ value: "pcs", label: "Pieces (pcs)" }, { value: "box", label: "Box" }]} value="" onChange={() => {}} placeholder="Choose product unit" />
+                </Field>
+                <div className="sm:col-span-2">
+                  <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-medium shadow hover:bg-indigo-700">
+                    + Add Barcode
+                  </button>
                 </div>
               </div>
             </SectionCard>
 
             {/* Footer actions */}
             <div className="flex flex-wrap items-center gap-3">
+              <Select
+                options={[{ value: "", label: "Additional Details" }, { value: "brand", label: "Brand & Attributes" }, { value: "seo", label: "SEO" }]}
+                value={""}
+                onChange={() => {}}
+                className="w-56"
+              />
               <button className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black">
                 Save
               </button>
@@ -212,6 +296,7 @@ export default function UnitOfMeasurementPage() {
               </button>
             </div>
           </div>
+
         </div>
       </div>
     </div>

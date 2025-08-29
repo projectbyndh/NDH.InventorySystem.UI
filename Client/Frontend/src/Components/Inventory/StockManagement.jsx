@@ -101,26 +101,6 @@ function Select({ value, onChange, options, placeholder = "Choose one", classNam
   );
 }
 
-function Toggle({ checked, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-        checked ? "bg-slate-900" : "bg-slate-300"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
-          checked ? "translate-x-5" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-}
-
 function Collapsible({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -145,13 +125,11 @@ function Collapsible({ title, children, defaultOpen = false }) {
   );
 }
 
-export default function UserProfileSettingsPage() {
-  const [language, setLanguage] = useState("");
-  const [notifications, setNotifications] = useState(true);
-  const languageOptions = [
-    { value: "en", label: "English" },
-    { value: "es", label: "Spanish" },
-    { value: "fr", label: "French" },
+export default function StockManagementPage() {
+  const [product, setProduct] = useState("");
+  const productOptions = [
+    { value: "waiwai", label: "Wai Wai" },
+    { value: "chips", label: "Chips" },
   ];
 
   return (
@@ -160,21 +138,21 @@ export default function UserProfileSettingsPage() {
       <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button className="hover:text-slate-900">← Back to Profile</button>
+            <button className="hover:text-slate-900">← Back to Stock Management</button>
             <span className="text-slate-300">/</span>
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">Stock Management</span>
             <span className="text-slate-300">/</span>
-            <span className="font-medium text-slate-900">Profile Settings</span>
+            <span className="font-medium text-slate-900">Manage Stock</span>
           </div>
           <div className="flex items-center gap-3">
-            <Collapsible title={<span className="text-sm font-medium">Additional Settings</span>} defaultOpen={false} />
+            <Collapsible title={<span className="text-sm font-medium">Additional Details</span>} defaultOpen={false} />
           </div>
         </div>
       </div>
 
       {/* Heading */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Profile Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Manage Stock</h1>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
@@ -182,54 +160,39 @@ export default function UserProfileSettingsPage() {
           {/* Left column */}
           <div className="lg:col-span-8 space-y-6">
             <SectionCard
-              title="Personal Information"
+              title="Stock Details"
+              right={<button className="text-sm text-slate-700 hover:text-slate-900 flex items-center gap-2">+ Add Stock Entry</button>}
             >
               <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Full Name" required>
-                  <Input placeholder="e.g., John Doe" />
-                </Field>
-                <Field label="Email" required>
-                  <Input placeholder="e.g., john.doe@example.com" type="email" />
-                </Field>
-                <Field label="Phone Number">
-                  <Input placeholder="e.g., +1 234 567 8900" type="tel" />
-                </Field>
-                <Field label="Language Preference">
+                <Field label="Product" required>
                   <Select
-                    options={languageOptions}
-                    value={language}
-                    onChange={setLanguage}
-                    placeholder="Choose language"
+                    options={productOptions}
+                    value={product}
+                    onChange={setProduct}
+                    placeholder="Choose product"
                   />
                 </Field>
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Notification Settings"
-              right={
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-slate-700">Enable Notifications</span>
-                  <Toggle checked={notifications} onChange={setNotifications} />
-                </div>
-              }
-            >
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Email Notifications">
+                <Field label="Stock Quantity" required>
+                  <Input placeholder="e.g., 100" inputMode="numeric" />
+                </Field>
+                <Field label="Stock Unit" required>
                   <Select
-                    options={[{ value: "all", label: "All" }, { value: "important", label: "Important Only" }, { value: "none", label: "None" }]}
+                    options={[{ value: "pcs", label: "Pieces (pcs)" }, { value: "box", label: "Box" }]}
                     value=""
                     onChange={() => {}}
-                    placeholder="Choose notification preference"
+                    placeholder="Choose stock unit"
                   />
                 </Field>
-                <Field label="SMS Notifications">
+                <Field label="Warehouse">
                   <Select
-                    options={[{ value: "all", label: "All" }, { value: "important", label: "Important Only" }, { value: "none", label: "None" }]}
+                    options={[{ value: "main", label: "Main Warehouse" }, { value: "secondary", label: "Secondary Warehouse" }]}
                     value=""
                     onChange={() => {}}
-                    placeholder="Choose notification preference"
+                    placeholder="Choose warehouse"
                   />
+                </Field>
+                <Field label="Minimum Stock Level" hint="e.g., Minimum stock to trigger restock alert">
+                  <Input placeholder="e.g., 10" inputMode="numeric" />
                 </Field>
               </div>
             </SectionCard>
