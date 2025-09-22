@@ -23,6 +23,8 @@ import UserProfile from "./Components/Management/UserProfile";
 
 import Analytics from "./Components/Analytics/Analytics";
 
+import Setting from "./Components/Settings/Setting";
+
 function App() {
   return (
     <BrowserRouter>
@@ -43,6 +45,8 @@ function App() {
           <Route path="/reports/userprofile" element={<UserProfile />} />
 
           <Route path="/analytics" element={<Analytics />} />
+
+          <Route path="/settings" element={<Setting />} />
         </Route>
       </Routes>
     </BrowserRouter>
