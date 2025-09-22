@@ -1,6 +1,5 @@
 import React from "react";
 import "./index.css";
-import Login from "./Components/authentication/Login";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./Components/Dashboard/Layout";
 import Master from "./Components/Dashboard/Master";
@@ -22,7 +21,7 @@ import UserManagement from "./Components/Management/UserManagement";
 import UserProfile from "./Components/Management/UserProfile";
 
 import Analytics from "./Components/Analytics/Analytics";
-import LoginPage from "./Components/authentication/Login";
+import LoginPage from "./Components/Authentication/Login";
 import Setting from "./Components/Settings/Setting";
 function App() {
   return (
