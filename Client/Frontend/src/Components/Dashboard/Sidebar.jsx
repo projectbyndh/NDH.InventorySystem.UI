@@ -207,7 +207,7 @@ const ProfessionalSidebar = () => {
           </div>
           {!isCollapsed && (
             <div>
-              <h1 className="text-base font-semibold text-gray-900">InvenPro</h1>
+              <h1 className="text-base font-semibold text-gray-900">NDH</h1>
               <p className="text-xs text-gray-500">Inventory Management</p>
             </div>
           )}

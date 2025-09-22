@@ -22,18 +22,19 @@ import UserManagement from "./Components/Management/UserManagement";
 import UserProfile from "./Components/Management/UserProfile";
 
 import Analytics from "./Components/Analytics/Analytics";
-
+import LoginPage from "./Components/authentication/Login";
 import Setting from "./Components/Settings/Setting";
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<Layout />}>
           <Route path="master" element={<Master />} />
           <Route path="/dashboard" element={<Sidebar />} />
           <Route path="/analytics" element={<Dashboard />} />
+
+
 
           <Route path="/inventory/products" element={<Addproducts />} />
           <Route path="/inventory/categories" element={<AddCategory />} />
