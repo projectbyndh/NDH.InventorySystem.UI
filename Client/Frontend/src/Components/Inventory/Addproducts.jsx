@@ -1,5 +1,7 @@
-import React, { useMemo, useRef, useState } from "react";
-
+import React, { useMemo, useRef, useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import useProductStore from "./productStore";
+import useCategoryStore from "../Store/"; // Assuming categoryStore exists for categoryId and subCategoryId
 
 const required = <span className="text-red-500">*</span>;
 
@@ -52,19 +54,6 @@ function Textarea(props) {
   );
 }
 
-function Chevron({ open }) {
-  return (
-    <svg
-      className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.17l3.71-2.94a.75.75 0 011.04 1.08l-4.24 3.36a.75.75 0 01-.94 0L5.21 8.31a.75.75 0 01.02-1.1z" />
-    </svg>
-  );
-}
-
 function Toggle({ checked, onChange }) {
   return (
     <button
@@ -86,7 +75,7 @@ function Toggle({ checked, onChange }) {
 }
 
 function useOutsideClose(ref, onClose) {
-  React.useEffect(() => {
+  useEffect(() => {
     function onDoc(e) {
       if (ref.current && !ref.current.contains(e.target)) onClose();
     }
@@ -161,15 +150,189 @@ function Collapsible({ title, children, defaultOpen = false }) {
   );
 }
 
+function Chevron({ open }) {
+  return (
+    <svg
+      className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.17l3.71-2.94a.75.75 0 011.04 1.08l-4.24 3.36a.75.75 0 01-.94 0L5.21 8.31a.75.75 0 01.02-1.1z" />
+    </svg>
+  );
+}
+
 export default function AddProductPage() {
-  // form state (demo only)
-  const [vatIncl, setVatIncl] = useState(true);
-  const [discountMode, setDiscountMode] = useState("");
-  const discountOptions = [
-    { value: "discountable", label: "Discountable" },
-    { value: "discounted", label: "Discounted" },
-    { value: "non-discountable", label: "Non-Discountable" },
-  ];
+  const { id } = useParams(); // Get product ID from URL for editing
+  const navigate = useNavigate();
+  const { products, loading, error, fetchProducts, createProduct, updateProduct, getProductById } = useProductStore();
+  const { categories } = useCategoryStore(); // Assuming categoryStore provides categories
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    sku: "",
+    price: 0,
+    cost: 0,
+    quantityInStock: 0,
+    minimumStockLevel: 0,
+    reorderQuantity: 0,
+    categoryId: 0,
+    subCategoryId: 0,
+    unitOfMeasureId: 0,
+    primaryVendorId: 0,
+    status: "Active",
+    trackInventory: true,
+    isSerialized: true,
+    hasExpiry: true,
+    variantGroupId: "",
+    variants: [],
+  });
+
+  // Fetch products and categories on mount, load existing product for editing
+  useEffect(() => {
+    fetchProducts();
+    if (id) {
+      const fetchProduct = async () => {
+        const product = await getProductById(parseInt(id));
+        if (product) {
+          setFormData({
+            name: product.name || "",
+            description: product.description || "",
+            sku: product.sku || "",
+            price: product.price || 0,
+            cost: product.cost || 0,
+            quantityInStock: product.quantityInStock || 0,
+            minimumStockLevel: product.minimumStockLevel || 0,
+            reorderQuantity: product.reorderQuantity || 0,
+            categoryId: product.categoryId || 0,
+            subCategoryId: product.subCategoryId || 0,
+            unitOfMeasureId: product.unitOfMeasureId || 0,
+            primaryVendorId: product.primaryVendorId || 0,
+            status: product.status || "Active",
+            trackInventory: product.trackInventory || true,
+            isSerialized: product.isSerialized || true,
+            hasExpiry: product.hasExpiry || true,
+            variantGroupId: product.variantGroupId || "",
+            variants: product.variants || [],
+          });
+        }
+      };
+      fetchProduct();
+    }
+  }, [id, fetchProducts, getProductById]);
+
+  // Dynamic options
+  const unitOfMeasureOptions = useMemo(() => [
+    { value: "0", label: "Pieces (pcs)" },
+    { value: "1", label: "Box" },
+  ], []);
+  const categoryOptions = useMemo(() => [
+    { value: "0", label: "None" },
+    ...(categories || []).map((cat) => ({ value: cat.id.toString(), label: cat.name })),
+  ], [categories]);
+  const subCategoryOptions = useMemo(() => [
+    { value: "0", label: "None" },
+    ...(categories || [])
+      .flatMap((cat) => cat.subCategories || [])
+      .map((subCat) => ({ value: subCat.id.toString(), label: subCat.name })),
+  ], [categories]);
+  const statusOptions = useMemo(() => [
+    { value: "Active", label: "Active" },
+    { value: "Inactive", label: "Inactive" },
+  ], []);
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : type === "number" ? Number(value) || 0 : value,
+    }));
+  };
+
+  // Handle toggle changes
+  const handleToggleChange = (name) => (checked) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      price: Number(formData.price) || 0,
+      cost: Number(formData.cost) || 0,
+      quantityInStock: Number(formData.quantityInStock) || 0,
+      minimumStockLevel: Number(formData.minimumStockLevel) || 0,
+      reorderQuantity: Number(formData.reorderQuantity) || 0,
+      categoryId: Number(formData.categoryId) || 0,
+      subCategoryId: Number(formData.subCategoryId) || 0,
+      unitOfMeasureId: Number(formData.unitOfMeasureId) || 0,
+      primaryVendorId: Number(formData.primaryVendorId) || 0,
+    };
+
+    try {
+      if (id) {
+        // Update existing product
+        const success = await updateProduct(parseInt(id), payload);
+        if (success) navigate("/products");
+      } else {
+        // Create new product
+        const success = await createProduct(payload);
+        if (success) {
+          setFormData({
+            name: "",
+            description: "",
+            sku: "",
+            price: 0,
+            cost: 0,
+            quantityInStock: 0,
+            minimumStockLevel: 0,
+            reorderQuantity: 0,
+            categoryId: 0,
+            subCategoryId: 0,
+            unitOfMeasureId: 0,
+            primaryVendorId: 0,
+            status: "Active",
+            trackInventory: true,
+            isSerialized: true,
+            hasExpiry: true,
+            variantGroupId: "",
+            variants: [],
+          });
+        }
+      }
+    } catch (err) {
+      // Error is already set in the store
+    }
+  };
+
+  // Handle form reset
+  const handleReset = () => {
+    setFormData({
+      name: "",
+      description: "",
+      sku: "",
+      price: 0,
+      cost: 0,
+      quantityInStock: 0,
+      minimumStockLevel: 0,
+      reorderQuantity: 0,
+      categoryId: 0,
+      subCategoryId: 0,
+      unitOfMeasureId: 0,
+      primaryVendorId: 0,
+      status: "Active",
+      trackInventory: true,
+      isSerialized: true,
+      hasExpiry: true,
+      variantGroupId: "",
+      variants: [],
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -177,11 +340,13 @@ export default function AddProductPage() {
       <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button className="hover:text-slate-900">← Back to Product Master</button>
+            <button onClick={() => navigate("/products")} className="hover:text-slate-900">
+              ← Back to Product Master
+            </button>
             <span className="text-slate-300">/</span>
             <span className="hidden sm:inline">Product Master</span>
             <span className="text-slate-300">/</span>
-            <span className="font-medium text-slate-900">Add Product</span>
+            <span className="font-medium text-slate-900">{id ? "Edit Product" : "Add Product"}</span>
           </div>
           <div className="flex items-center gap-3">
             <Collapsible title={<span className="text-sm font-medium">Additional Details</span>} defaultOpen={false} />
@@ -191,54 +356,87 @@ export default function AddProductPage() {
 
       {/* Heading */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Add Product</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">
+          {id ? "Edit Product" : "Add Product"}
+        </h1>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Left column */}
           <div className="lg:col-span-8 space-y-6">
+            {error && <p className="text-red-500">{error}</p>}
             <SectionCard
               title="Basic Info"
               right={<button className="text-sm text-slate-700 hover:text-slate-900 flex items-center gap-2">+ Add Stock Unit</button>}
             >
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Product Name" required>
-                  <Input placeholder="e.g., Wai Wai" />
-                </Field>
-                <Field label="Product Code">
-                  <Input placeholder="e.g., 123455" />
-                </Field>
-                <Field label="Stock Unit" required>
-                  <Select options={[
-                    { value: "pcs", label: "Pieces (pcs)" },
-                    { value: "box", label: "Box" },
-                  ]} value="" onChange={() => {}} placeholder="Choose product unit" />
-                </Field>
-                <Field label="Product Categories" required>
-                  <Select options={[
-                    { value: "grocery", label: "Grocery" },
-                    { value: "snacks", label: "Snacks" },
-                  ]} value="" onChange={() => {}} placeholder="Choose product categories" />
-                </Field>
-                <Field label="Sub Categories">
-                  <Select options={[
-                    { value: "noodles", label: "Noodles" },
-                    { value: "chips", label: "Chips" },
-                  ]} value="" onChange={() => {}} placeholder="Choose product sub categories" />
-                </Field>
-                <Field label="Product Type" required>
-                  <Select options={[
-                    { value: "regular", label: "Regular" },
-                    { value: "variant", label: "Variant" },
-                  ]} value="" onChange={() => {}} placeholder="Choose product type" />
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Short Description" hint="e.g., This product is generally used for children">
-                    <Textarea placeholder="Write a short description..." />
+              <form onSubmit={handleSubmit}>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field label="Product Name" required>
+                    <Input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Wai Wai"
+                      required
+                    />
                   </Field>
+                  <Field label="Product Code (SKU)">
+                    <Input
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 123455"
+                    />
+                  </Field>
+                  <Field label="Stock Unit" required>
+                    <Select
+                      name="unitOfMeasureId"
+                      options={unitOfMeasureOptions}
+                      value={formData.unitOfMeasureId.toString()}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, unitOfMeasureId: Number(value) }))}
+                      placeholder="Choose product unit"
+                    />
+                  </Field>
+                  <Field label="Product Categories" required>
+                    <Select
+                      name="categoryId"
+                      options={categoryOptions}
+                      value={formData.categoryId.toString()}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, categoryId: Number(value) }))}
+                      placeholder="Choose product category"
+                    />
+                  </Field>
+                  <Field label="Sub Categories">
+                    <Select
+                      name="subCategoryId"
+                      options={subCategoryOptions}
+                      value={formData.subCategoryId.toString()}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, subCategoryId: Number(value) }))}
+                      placeholder="Choose product sub category"
+                    />
+                  </Field>
+                  <Field label="Product Type" required>
+                    <Select
+                      name="status"
+                      options={statusOptions}
+                      value={formData.status}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                      placeholder="Choose product type"
+                    />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <Field label="Short Description" hint="e.g., This product is generally used for children">
+                      <Textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        placeholder="Write a short description..."
+                      />
+                    </Field>
+                  </div>
                 </div>
-              </div>
+              </form>
             </SectionCard>
 
             <SectionCard
@@ -246,41 +444,60 @@ export default function AddProductPage() {
               right={
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-slate-700">VAT Include</span>
-                  <Toggle checked={vatIncl} onChange={setVatIncl} />
+                  <Toggle checked={formData.trackInventory} onChange={handleToggleChange("trackInventory")} />
                 </div>
               }
             >
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Purchase Price" required>
-                  <Input placeholder="e.g., 1230" inputMode="decimal" />
-                </Field>
-                <Field label="Discount Mode" required>
-                  <Select options={discountOptions} value={discountMode} onChange={setDiscountMode} placeholder="Choose one mode" />
-                </Field>
-                <Field label="Retail Price (excluding VAT)" required>
-                  <Input placeholder="e.g., 1234455" inputMode="decimal" />
-                </Field>
-                <div />
-              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field label="Purchase Price" required>
+                    <Input
+                      name="cost"
+                      type="number"
+                      value={formData.cost}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 1230"
+                      required
+                    />
+                  </Field>
+                  <Field label="Retail Price (excluding VAT)" required>
+                    <Input
+                      name="price"
+                      type="number"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 1234455"
+                      required
+                    />
+                  </Field>
+                </div>
+              </form>
             </SectionCard>
 
             <SectionCard title="Barcode Mapping" right={<button className="text-sm text-slate-700 hover:text-slate-900 flex items-center gap-2">⌄</button>}>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Barcode" required>
-                  <Input placeholder="e.g., 1230" />
-                </Field>
-                <Field label="Stock Unit">
-                  <Select options={[{ value: "pcs", label: "Pieces (pcs)" }, { value: "box", label: "Box" }]} value="" onChange={() => {}} placeholder="Choose product unit" />
-                </Field>
-                <div className="sm:col-span-2">
-                  <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-medium shadow hover:bg-indigo-700">
-                    + Add Barcode
-                  </button>
+              <form onSubmit={handleSubmit}>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field label="Barcode" required>
+                    <Input
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 1230"
+                      required
+                    />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-medium shadow hover:bg-indigo-700"
+                    >
+                      + Add Barcode
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </form>
             </SectionCard>
 
-            {/* Footer actions */}
             <div className="flex flex-wrap items-center gap-3">
               <Select
                 options={[{ value: "", label: "Additional Details" }, { value: "brand", label: "Brand & Attributes" }, { value: "seo", label: "SEO" }]}
@@ -288,15 +505,24 @@ export default function AddProductPage() {
                 onChange={() => {}}
                 className="w-56"
               />
-              <button className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black">
-                Save
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black disabled:opacity-50"
+              >
+                {loading ? "Saving..." : id ? "Update" : "Save"}
               </button>
-              <button className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
                 Reset
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
