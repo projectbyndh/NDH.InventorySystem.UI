@@ -1,116 +1,27 @@
-import React, { useState } from "react";
+// src/Components/Inventory/CategoryForm.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import CategoryService from "../Api/Categoryapi";
 
 const required = <span className="text-red-500">*</span>;
 
-function SectionCard({ title, right, children, className = "" }) {
-  return (
-    <section className={`bg-white rounded-2xl shadow-sm border border-slate-200 ${className}`}>
-      <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-200">
-        <h3 className="text-slate-900 font-semibold tracking-tight">{title}</h3>
-        {right}
-      </header>
-      <div className="p-5 sm:p-6 space-y-4">{children}</div>
-    </section>
-  );
-}
+function Input(props){ return <input {...props} className={"w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-[15px] outline-none focus:ring-2 focus:ring-slate-900/5 "+(props.className||"")} />; }
+function Textarea(props){ return <textarea {...props} rows={3} className={"w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none focus:ring-2 focus:ring-slate-900/5 "+(props.className||"")} />; }
 
-function Field({ label, required: req, children, hint }) {
-  return (
-    <label className="block">
-      <div className="mb-1 text-[13px] font-medium text-slate-700">
-        {label} {req ? required : null}
-      </div>
-      {children}
-      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
-    </label>
-  );
-}
-
-function Input(props) {
-  return (
-    <input
-      {...props}
-      className={
-        "w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-[15px] outline-none transition " +
-        "placeholder:text-slate-400 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400"
-      }
-    />
-  );
-}
-
-function Textarea(props) {
-  return (
-    <textarea
-      rows={3}
-      {...props}
-      className={
-        "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none transition " +
-        "placeholder:text-slate-400 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400"
-      }
-    />
-  );
-}
-
-function Chevron({ open }) {
-  return (
-    <svg
-      className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.17l3.71-2.94a.75.75 0 011.04 1.08l-4.24 3.36a.75.75 0 01-.94 0L5.21 8.31a.75.75 0 01.02-1.1z" />
-    </svg>
-  );
-}
-
-function Select({ value, onChange, options, placeholder = "Choose one", className = "" }) {
+function Select({ value, onChange, options, placeholder="Choose one" }) {
   const [open, setOpen] = useState(false);
-  const ref = React.useRef(null);
-
-  React.useEffect(() => {
-    function onDoc(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
-
-  const current = React.useMemo(() => options.find((o) => o.value === value), [options, value]);
-
+  const ref = useRef(null);
+  useEffect(()=>{ const f=(e)=>{ if(ref.current && !ref.current.contains(e.target)) setOpen(false);}; document.addEventListener("mousedown", f); return ()=>document.removeEventListener("mousedown", f); },[]);
+  const current = useMemo(()=> options.find(o=>String(o.value)===String(value)), [options, value]);
   return (
-    <div className={"relative " + className} ref={ref}>
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="w-full h-10 px-3 rounded-xl border bg-white border-slate-300 text-left text-[15px] flex items-center justify-between"
-      >
-        <span className={current ? "text-slate-900" : "text-slate-400"}>
-          {current ? current.label : placeholder}
-        </span>
-        <Chevron open={open} />
+    <div ref={ref} className="relative">
+      <button type="button" onClick={()=>setOpen(v=>!v)} className="w-full h-10 px-3 rounded-xl border bg-white border-slate-300 text-left text-[15px] flex items-center justify-between">
+        <span className={current?"text-slate-900":"text-slate-400"}>{current?current.label:placeholder}</span>
+        <svg className={`h-4 w-4 transition-transform ${open?"rotate-180":""}`} viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.17l3.71-2.94a.75.75 0 1 1 1.04 1.08l-4.24 3.36a.75.75 0 0 1-.94 0L5.21 8.31a.75.75 0 0 1 .02-1.1z"/></svg>
       </button>
       {open && (
-        <ul
-          role="listbox"
-          tabIndex={-1}
-          className="absolute z-20 mt-2 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg"
-        >
-          {options.map((o) => (
-            <li
-              key={o.value}
-              role="option"
-              aria-selected={o.value === value}
-              onClick={() => {
-                onChange(o.value);
-                setOpen(false);
-              }}
-              className={`px-3 py-2 cursor-pointer text-[15px] hover:bg-slate-50 ${
-                o.value === value ? "bg-slate-50" : ""
-              }`}
-            >
+        <ul className="absolute z-20 mt-2 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+          {options.map((o)=>(
+            <li key={o.value} onClick={()=>{onChange(o.value); setOpen(false);}} className={`px-3 py-2 cursor-pointer text-[15px] hover:bg-slate-50 ${String(o.value)===String(value)?"bg-slate-50":""}`}>
               {o.label}
             </li>
           ))}
@@ -120,95 +31,216 @@ function Select({ value, onChange, options, placeholder = "Choose one", classNam
   );
 }
 
-function Collapsible({ title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+export default function CategoryForm({ initial, onSaved, onCancel }) {
+  const editingId = initial?.id ?? initial?.categoryId;
+
+  // DTO fields
+  const [name, setName] = useState(initial?.name ?? "");
+  const [code, setCode] = useState(initial?.code ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");        // ← stays as string
+  const [parentCategoryId, setParentCategoryId] = useState(String(initial?.parentCategoryId ?? "0"));
+  const [hasVariants, setHasVariants] = useState(Boolean(initial?.hasVariants ?? false));
+  const [requiresSerialNumbers, setRequiresSerialNumbers] = useState(Boolean(initial?.requiresSerialNumbers ?? false));
+  const [trackExpiration, setTrackExpiration] = useState(Boolean(initial?.trackExpiration ?? false));
+  const [defaultUnitOfMeasure, setDefaultUnitOfMeasure] = useState(initial?.defaultUnitOfMeasure ?? "");
+  const [taxonomyPath, setTaxonomyPath] = useState(initial?.taxonomyPath ?? "");
+  const [hierarchyLevel, setHierarchyLevel] = useState(Number.isFinite(initial?.hierarchyLevel) ? Number(initial?.hierarchyLevel) : 0);
+  const [subCategoriesInput, setSubCategoriesInput] = useState(Array.isArray(initial?.subCategories) ? initial.subCategories.join(", ") : "");
+
+  // 🔽 NEW: local preview state for uploaded file
+  const [preview, setPreview] = useState(initial?.imageUrl || "");
+
+  // Build parent options
+  const [parentOptions, setParentOptions] = useState([{ value: "0", label: "None (Top-level Category)" }]);
+  const [loadingParents, setLoadingParents] = useState(false);
+
+  const unitOptions = useMemo(()=>[
+    { value: "", label: "None" },
+    { value: "pcs", label: "Piece" },
+    { value: "kg",  label: "Kilogram" },
+    { value: "g",   label: "Gram" },
+    { value: "ltr", label: "Liter" },
+    { value: "box", label: "Box" },
+  ], []);
+
+  useEffect(()=> {
+    (async ()=>{
+      setLoadingParents(true);
+      try {
+        const data = await CategoryService.getAll({ pageNumber:1, pageSize:100 });
+        const list = data?.items ?? data ?? [];
+        setParentOptions([{value:"0", label:"None (Top-level Category)"},
+          ...list.map(c=>({ value:String(c.id ?? c.categoryId ?? 0), label:c.name ?? `Category ${c.id}` }))
+        ]);
+      } catch (e) {
+        console.warn("Failed to load parent categories", e);
+      } finally {
+        setLoadingParents(false);
+      }
+    })();
+  },[]);
+
+  // 🔽 NEW: file → base64 (data URL) helper
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);       // result is "data:<mime>;base64,...."
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  // 🔽 NEW: handle local file selection (sets preview + imageUrl as base64)
+  const onPickImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setPreview(URL.createObjectURL(file));  // fast local preview (blob URL)
+      setImageUrl(String(dataUrl));           // what we send to API (fits your JSON DTO)
+    } catch (err) {
+      console.error("Failed to read file", err);
+    }
+  };
+
+  // 🔽 If user types/pastes a URL manually, update both imageUrl and preview
+  const onTypeImageUrl = (url) => {
+    setImageUrl(url);
+    setPreview(url);
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    const subCategories = subCategoriesInput.split(",").map(s => s.trim()).filter(Boolean);
+
+    const payload = {
+      name: name.trim(),
+      code: code.trim() || undefined,
+      description: description.trim() || undefined,
+      imageUrl: imageUrl || undefined,                  // <-- may be base64 data URL or http(s) URL
+      parentCategoryId: Number(parentCategoryId) || 0,
+      hasVariants,
+      requiresSerialNumbers,
+      trackExpiration,
+      defaultUnitOfMeasure: defaultUnitOfMeasure || undefined,
+      taxonomyPath: taxonomyPath.trim() || undefined,
+      hierarchyLevel: Number.isFinite(hierarchyLevel) ? Number(hierarchyLevel) : 0,
+      subCategories,
+    };
+
+    const res = editingId
+      ? await CategoryService.update(editingId, payload)
+      : await CategoryService.create(payload);
+
+    onSaved?.(res);
+  };
+
   return (
-    <div className="border border-slate-200 rounded-xl">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-2 text-left text-sm font-medium text-slate-700"
-      >
-        <span>{title}</span>
-        <Chevron open={open} />
-      </button>
-      {open && <div className="p-4 pt-0">{children}</div>}
-    </div>
-  );
-}
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid sm:grid-cols-2 gap-4">
+        <label className="block">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Category Name {required}</div>
+          <Input value={name} onChange={(e)=>setName(e.target.value)} placeholder="e.g., Beverages" required />
+        </label>
 
-export default function AddCategoryPage() {
-  const [parentCategory, setParentCategory] = useState("");
+        <label className="block">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Category Code</div>
+          <Input value={code} onChange={(e)=>setCode(e.target.value)} placeholder="e.g., BEV001" />
+        </label>
 
-  const parentCategoryOptions = [
-    { value: "none", label: "None (Top-level Category)" },
-    { value: "grocery", label: "Grocery" },
-    { value: "electronics", label: "Electronics" },
-  ];
+        <label className="block sm:col-span-2">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Description</div>
+          <Textarea value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="Write a description..." />
+        </label>
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top bar */}
-      <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button className="hover:text-slate-900">← Back to Category Management</button>
-            <span className="text-slate-300">/</span>
-            <span className="hidden sm:inline">Category Management</span>
-            <span className="text-slate-300">/</span>
-            <span className="font-medium text-slate-900">Add Category</span>
+        {/* 🔽 NEW: Choose file + URL fallback + preview */}
+        <div className="sm:col-span-2 grid gap-3">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label className="block">
+              <div className="mb-1 text-[13px] font-medium text-slate-700">Upload Image</div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onPickImage}
+                className="block w-full text-[15px]"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1 text-[13px] font-medium text-slate-700">or Image URL</div>
+              <Input
+                value={imageUrl}
+                onChange={(e)=>onTypeImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+              />
+            </label>
           </div>
-          <div className="flex items-center gap-3">
-            <Collapsible title={<span className="text-sm font-medium">Additional Details</span>} defaultOpen={false} />
-          </div>
-        </div>
-      </div>
 
-      {/* Heading */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-6 mb-4">Add Category</h1>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-          {/* Left column */}
-          <div className="lg:col-span-8 space-y-6">
-            <SectionCard title="Category Details">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Category Name" required>
-                  <Input placeholder="e.g., Snacks" />
-                </Field>
-                <Field label="Category Code">
-                  <Input placeholder="e.g., SNK123" />
-                </Field>
-                <Field label="Parent Category">
-                  <Select
-                    options={parentCategoryOptions}
-                    value={parentCategory}
-                    onChange={setParentCategory}
-                    placeholder="Choose parent category"
-                  />
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Description" hint="e.g., This category includes various snack items">
-                    <Textarea placeholder="Write a description..." />
-                  </Field>
-                </div>
-              </div>
-            </SectionCard>
-
-            {/* Footer actions */}
-            <div className="flex flex-wrap items-center gap-3">
-              <button className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black">
-                Save
-              </button>
-              <button className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                Reset
-              </button>
+          {preview ? (
+            <div className="flex items-center gap-3">
+              <img
+                src={preview}
+                alt="Preview"
+                className="h-20 w-20 rounded-lg border object-cover"
+              />
+              <span className="text-sm text-slate-500">Preview</span>
             </div>
-          </div>
+          ) : null}
         </div>
+
+        <label className="block">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Parent Category</div>
+          <Select
+            options={parentOptions}
+            value={parentCategoryId}
+            onChange={setParentCategoryId}
+            placeholder={loadingParents ? "Loading..." : "Choose parent"}
+          />
+        </label>
+
+        <label className="block">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Default Unit of Measure</div>
+          <Select options={unitOptions} value={defaultUnitOfMeasure} onChange={setDefaultUnitOfMeasure} placeholder="None" />
+        </label>
+
+        <label className="block">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Taxonomy Path</div>
+          <Input value={taxonomyPath} onChange={(e)=>setTaxonomyPath(e.target.value)} placeholder="e.g., root/beverages" />
+        </label>
+
+        <label className="block">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Hierarchy Level</div>
+          <Input type="number" min={0} step={1} value={hierarchyLevel} onChange={(e)=>setHierarchyLevel(Number(e.target.value))} placeholder="0" />
+        </label>
+
+        <label className="block sm:col-span-2">
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Subcategories (comma-separated)</div>
+          <Input value={subCategoriesInput} onChange={(e)=>setSubCategoriesInput(e.target.value)} placeholder="e.g., Soda, Juice, Water" />
+        </label>
       </div>
-    </div>
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={hasVariants} onChange={()=>setHasVariants(v=>!v)} /> Has Variants
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={requiresSerialNumbers} onChange={()=>setRequiresSerialNumbers(v=>!v)} /> Requires Serial Numbers
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={trackExpiration} onChange={()=>setTrackExpiration(v=>!v)} /> Track Expiration
+        </label>
+      </div>
+
+      <div className="flex gap-3">
+        <button type="submit" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+          {editingId ? "Update" : "Create"}
+        </button>
+        {onCancel && (
+          <button type="button" onClick={onCancel} className="rounded-xl border border-slate-300 px-4 py-2 text-sm">
+            Cancel
+          </button>
+        )}
+      </div>
+    </form>
   );
 }

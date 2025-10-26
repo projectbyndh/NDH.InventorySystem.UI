@@ -1,27 +1,18 @@
+// src/Components/Store/Loginstore.jsx
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-const useLoginStore = create((set) => ({
-  user: null,
-  token: null,
-  isLoggedIn: false,
-
-  setAuth: (user, token) => {
-    localStorage.setItem("refreshToken", token);
-    set({
-      user,
-      token,
-      isLoggedIn: true,
-    });
-  },
-
-  logout: () => {
-    localStorage.removeItem("refreshToken");
-    set({
-      user: null,
+const useLoginStore = create(
+  persist(
+    (set) => ({
       token: null,
-      isLoggedIn: false,
-    });
-  },
-}));
+      refreshToken: null,
+      setToken: (token) => set({ token }),
+      setRefresh: (refreshToken) => set({ refreshToken }),
+      clearAuth: () => set({ token: null, refreshToken: null }),
+    }),
+    { name: "auth_store" }
+  )
+);
 
 export default useLoginStore;

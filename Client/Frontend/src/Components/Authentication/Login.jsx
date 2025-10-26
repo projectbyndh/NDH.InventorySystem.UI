@@ -1,102 +1,95 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import useLoginHooks from "../Hooks/Loginhooks";
+import useLoginHook from "../Hooks/Loginhooks";  // ✅ make sure filename matches
 import useLoginStore from "../Store/Loginstore";
 
 const LoginPage = () => {
-  const { login, loading, error } = useLoginHooks();
-  const isLoggedIn = useLoginStore((state) => state.isLoggedIn);
-  const user = useLoginStore((state) => state.user);
+  const { handleLogin, loading } = useLoginHook(); // ✅ fixed destructuring
+  const token = useLoginStore((s) => s.token); // ✅ store has token
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Redirect if already logged in (store or token in localStorage)
   useEffect(() => {
-    if (isLoggedIn) {
+    const storedToken = localStorage.getItem("access_token");
+    if (storedToken || token) {
       navigate("/dashboard");
     }
-  }, [isLoggedIn, navigate]);
+  }, [token, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await login({ userEmail: email, password });
-    } catch (err) {
-      console.error("HandleSubmit error:", err);
-    }
-  };
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      await handleLogin(email, password); // ✅ matches your hook signature
+      // Redirect handled automatically by effect above after token is set
+    },
+    [email, password, handleLogin]
+  );
 
   return (
     <div
       style={{
-        maxWidth: "400px",
+        maxWidth: 400,
         margin: "50px auto",
-        padding: "20px",
+        padding: 20,
         border: "1px solid #ccc",
-        borderRadius: "8px",
+        borderRadius: 8,
         fontFamily: "Arial, sans-serif",
       }}
     >
       <h2 style={{ textAlign: "center" }}>Login</h2>
 
-      {isLoggedIn ? (
-        <p style={{ textAlign: "center", color: "green" }}>
-          Welcome, {user?.id || "User"}!
-        </p>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "15px" }}>
-            <label htmlFor="email" style={{ display: "block", marginBottom: "5px" }}>
-              Email:
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "15px" }}>
-            <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>
-              Password:
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
-          </div>
-
-          <button
-            type="submit"
+      <form onSubmit={handleSubmit} autoComplete="on">
+        <div style={{ marginBottom: 15 }}>
+          <label htmlFor="email" style={{ display: "block", marginBottom: 5 }}>
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             disabled={loading}
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+            style={{ width: "100%", padding: 8, boxSizing: "border-box" }}
+          />
+        </div>
 
-          {error && (
-            <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
-              {error}
-            </p>
-          )}
-        </form>
-      )}
+        <div style={{ marginBottom: 15 }}>
+          <label htmlFor="password" style={{ display: "block", marginBottom: 5 }}>
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+            style={{ width: "100%", padding: 8, boxSizing: "border-box" }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: 10,
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: 4,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
     </div>
   );
 };

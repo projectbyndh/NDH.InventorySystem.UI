@@ -1,68 +1,53 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import CategoryService from "../Api/Categoryapi";
+import useLoginStore from "../Store/Loginstore";
 
-export const useCategories = () => {
-  const [categories, setCategories] = useState([]);
+export default function useCategories(initialPageSize = 20) {
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [total, setTotal] = useState(0);
 
-  // 🟦 Fetch all categories
-  const fetchCategories = async () => {
+  const storeToken = useLoginStore((s) => s.token);
+  const token = storeToken || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+
+  const prettyErr = (err) =>
+    err?.response?.data?._message ||
+    err?.response?.data?.message ||
+    err?.message ||
+    "Something went wrong";
+
+  const fetchCategories = useCallback(async (page = pageNumber, size = pageSize) => {
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await CategoryService.getAll();
-      setCategories(data || []);
+      const data = await CategoryService.getAll({ pageNumber: page, pageSize: size });
+      const list = data?.items ?? data?.data ?? data ?? [];
+      if (!alive.current) return;
+      setItems(Array.isArray(list) ? list : []);
+      setTotal(data?.total ?? data?.count ?? list.length ?? 0);
+      setPageNumber(page);
+      setPageSize(size);
     } catch (err) {
-      setError(err.message || "Failed to load categories");
+      if (!alive.current) return;
+      setError(prettyErr(err)); // will show “Internal Server Error: An unexpected error occurred.”
     } finally {
-      setLoading(false);
+      if (alive.current) setLoading(false);
     }
-  };
+  }, [pageNumber, pageSize, token]);
 
-  // Run fetch on mount
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  // 🟩 Create new category
-  const createCategory = async (payload) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const newCategory = await CategoryService.create(payload);
-      setCategories((prev) => [...prev, newCategory]);
-      return true;
-    } catch (err) {
-      setError(err.message || "Failed to create category");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🟥 Delete category
-  const deleteCategory = async (id) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await CategoryService.remove(id);
-      setCategories((prev) => prev.filter((cat) => cat.id !== id));
-      return true;
-    } catch (err) {
-      setError(err.message || "Failed to delete category");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!token) return;
+    fetchCategories(1, initialPageSize);
+  }, [token, initialPageSize, fetchCategories]);
 
   return {
-    categories,
-    loading,
-    error,
-    fetchCategories,
-    createCategory,
-    deleteCategory,
+    items, loading, error, total, pageNumber, pageSize,
+    setPageNumber, setPageSize, fetchCategories,
   };
-};
+}

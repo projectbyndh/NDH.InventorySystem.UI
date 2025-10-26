@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import useProductStore from "./productStore";
-import useCategoryStore from "../Store/"; // Assuming categoryStore exists for categoryId and subCategoryId
+import useProductStore from "../Store/Productstore";
+import useCategoryStore from "../Store/Categorystore"; // Assuming categoryStore exists for categoryId and subCategoryId
 
 const required = <span className="text-red-500">*</span>;
 
