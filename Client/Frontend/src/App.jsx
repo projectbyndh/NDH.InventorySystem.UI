@@ -16,7 +16,7 @@ import Analytics from "./Components/Analytics/Analytics";
 import LoginPage from "./Components/Authentication/Login";
 import Setting from "./Components/Settings/Setting";
 import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
-import PublicOnlyRoute from "./Components/Authentication/ProtectedRoute";
+import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
 
 function App() {
   return (

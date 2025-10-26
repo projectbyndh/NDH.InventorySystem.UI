@@ -1,4 +1,4 @@
-// src/Hooks/useLoginHook.ts
+// src/Hooks/useLoginHook.jsx   // (use .jsx since you're not using TS types)
 import { useState } from "react";
 import { loginUser } from "../Api/Loginapi";
 import useLoginStore from "../Store/Loginstore";
@@ -20,11 +20,12 @@ const useLoginHook = () => {
 
         setToken(jwt);
         setRefresh(refresh);
+
         return { ok: true };
       }
       return { ok: false, error: data?._message || "Login failed" };
     } catch (e) {
-      return { ok: false, error: e?.message || e };
+      return { ok: false, error: e?.message || String(e) };
     } finally {
       setLoading(false);
     }

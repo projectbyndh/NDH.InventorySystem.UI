@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import useLoginStore from "../Store/Loginstore";
 
-const ProtectedRoute = ({ children }) => {
+const PublicOnlyRoute = ({ children }) => {
   const token = useLoginStore((s) => s.token);
   const [hydrated, setHydrated] = useState(false);
   const location = useLocation();
@@ -17,11 +17,12 @@ const ProtectedRoute = ({ children }) => {
 
   if (!hydrated) return null; // or a tiny loader
 
-  if (!token) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+  // If already logged in, keep them out of /login
+  if (token) {
+    return <Navigate to="/dashboard" replace state={{ from: location }} />;
   }
 
   return children;
 };
 
-export default ProtectedRoute;
+export default PublicOnlyRoute;

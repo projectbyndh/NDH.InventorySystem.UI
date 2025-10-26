@@ -1,4 +1,3 @@
-// src/Components/Api/Loginapi.jsx
 import axiosInstance from "./AxiosInstance";
 
 export const loginUser = async ({ userEmail, password }) => {
@@ -7,6 +6,6 @@ export const loginUser = async ({ userEmail, password }) => {
   try {
     return typeof raw === "string" ? JSON.parse(raw) : raw;
   } catch {
-    return raw; // fallback if server returns plain text
+    return raw;
   }
 };
