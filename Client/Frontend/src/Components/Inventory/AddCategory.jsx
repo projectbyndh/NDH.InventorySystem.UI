@@ -104,21 +104,11 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     Number.isFinite(initial?.hierarchyLevel) ? Number(initial?.hierarchyLevel) : 0
   );
 
-  // Subcategories: full DTOs
-  const [subCategories, setSubCategories] = useState(
-    Array.isArray(initial?.subCategories)
-      ? initial.subCategories.map((s) => ({
-          name: s.name ?? (typeof s === "string" ? s : ""),
-          description: s.description ?? "",
-        }))
-      : []
-  );
-
   // ── UI State ──────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [parentOptions, setParentOptions] = useState([{ value: "0", label: "None (Top-level)" }]);
-  const [loadingParents, setLoadingParents] = useState(true); // start as true
+  const [loadingParents, setLoadingParents] = useState(true);
 
   // ── Options ───────────────────────────────────────────────────────────────
   const unitOptions = useMemo(
@@ -133,7 +123,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     []
   );
 
-  // ── Load Parents (Robust) ─────────────────────────────────────────────────
+  // ── Load Parents ─────────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -176,7 +166,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     };
   }, []);
 
-  // ── Image Helpers ─────────────────────────────────────────────────────────
+  // ── Image Helpers ────────────────────────────────────────────────────────
   const fileToDataUrl = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -206,29 +196,30 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     setPreview(url || "");
   };
 
-  // ── Subcategory Management ────────────────────────────────────────────────
-  const addSubcategory = () => {
-    setSubCategories((prev) => [...prev, { name: "", description: "" }]);
-  };
-
-  const updateSubcategory = (index, field, value) => {
-    setSubCategories((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
-    );
-  };
-
-  const removeSubcategory = (index) => {
-    setSubCategories((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // ── Validation ────────────────────────────────────────────────────────────
+  // ── Validation ───────────────────────────────────────────────────────────
   const validate = () => {
     if (!name.trim()) return "Category name is required";
-    if (subCategories.some((s) => !s.name.trim())) return "All subcategories must have a name";
     return null;
   };
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // ── Reset Form ───────────────────────────────────────────────────────────
+  const resetForm = () => {
+    setName("");
+    setCode("");
+    setDescription("");
+    setImageUrl("");
+    setPreview("");
+    setParentCategoryId("0");
+    setHasVariants(false);
+    setRequiresSerialNumbers(false);
+    setTrackExpiration(false);
+    setDefaultUnitOfMeasure("");
+    setTaxonomyPath("");
+    setHierarchyLevel(0);
+    setError("");
+  };
+
+  // ── Submit ───────────────────────────────────────────────────────────────
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -247,24 +238,20 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         description: description.trim() || undefined,
         imageUrl: imageUrl || undefined,
         parentCategoryId: parentCategoryId === "0" ? undefined : Number(parentCategoryId),
-        hasVariants,  
+        hasVariants,
         requiresSerialNumbers,
         trackExpiration,
         defaultUnitOfMeasure: defaultUnitOfMeasure || undefined,
         taxonomyPath: taxonomyPath.trim() || undefined,
         hierarchyLevel,
-        subCategories: subCategories
-          .filter((s) => s.name.trim())
-          .map((s) => ({
-            name: s.name.trim(),
-            description: s.description.trim() || undefined,
-          })),
       };
 
       const result = editingId
         ? await CategoryService.update(editingId, payload)
         : await CategoryService.create(payload);
 
+      // ---- NEW: clear form after success ----
+      resetForm();
       onSaved?.(result);
     } catch (err) {
       const msg =
@@ -278,9 +265,9 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <><form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6">
       {/* Name & Code */}
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">
@@ -327,14 +314,16 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             value={parentCategoryId}
             onChange={setParentCategoryId}
             placeholder={loadingParents ? "Loading categories..." : "None"}
-            disabled={loadingParents} />
+            disabled={loadingParents}
+          />
         </label>
         <label className="block">
           <div className="mb-1 text-[13px] font-medium text-slate-700">Unit of Measure</div>
           <Select
             options={unitOptions}
             value={defaultUnitOfMeasure}
-            onChange={setDefaultUnitOfMeasure} />
+            onChange={setDefaultUnitOfMeasure}
+          />
         </label>
       </div>
 
@@ -350,47 +339,9 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             type="number"
             min={0}
             value={hierarchyLevel}
-            onChange={(e) => setHierarchyLevel(Number(e.target.value))} />
+            onChange={(e) => setHierarchyLevel(Number(e.target.value))}
+          />
         </label>
-      </div>
-
-      {/* Subcategories */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="text-[13px] font-medium text-slate-700">Subcategories</div>
-          <button
-            type="button"
-            onClick={addSubcategory}
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            + Add
-          </button>
-        </div>
-        {subCategories.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">Click "+ Add" to create a subcategory</p>
-        ) : (
-          subCategories.map((sub, idx) => (
-            <div key={idx} className="flex gap-2 items-start">
-              <Input
-                placeholder="Subcategory name"
-                value={sub.name}
-                onChange={(e) => updateSubcategory(idx, "name", e.target.value)}
-                className="flex-1" />
-              <Input
-                placeholder="Description (optional)"
-                value={sub.description}
-                onChange={(e) => updateSubcategory(idx, "description", e.target.value)}
-                className="flex-1" />
-              <button
-                type="button"
-                onClick={() => removeSubcategory(idx)}
-                className="mt-1 text-red-600 hover:text-red-800 text-lg"
-              >
-                ×
-              </button>
-            </div>
-          ))
-        )}
       </div>
 
       {/* Checkboxes */}
@@ -403,14 +354,16 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
           <input
             type="checkbox"
             checked={requiresSerialNumbers}
-            onChange={() => setRequiresSerialNumbers((v) => !v)} />
+            onChange={() => setRequiresSerialNumbers((v) => !v)}
+          />
           Requires Serial Numbers
         </label>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={trackExpiration}
-            onChange={() => setTrackExpiration((v) => !v)} />
+            onChange={() => setTrackExpiration((v) => !v)}
+          />
           Track Expiration
         </label>
       </div>
@@ -448,6 +401,6 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
           Open category form
         </Link>
       </div>
-    </form></>
+    </form>
   );
 }
