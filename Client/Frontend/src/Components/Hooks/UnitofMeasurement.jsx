@@ -1,32 +1,46 @@
-import UnitOfMeasurementService from "../Api/Unitofmeasurement";
+// src/hooks/useUnitOfMeasures.js
+import { useEffect, useState, useCallback, useRef } from "react";
+import UnitOfMeasureService from "../api/UnitOfMeasureApi";
+import useLoginStore from "../Store/Loginstore";
 
-const useUnitOfMeasurement = () => {
-    const getAll = async () => {
-        const response = await UnitOfMeasurementService.getAll();
-        return response.data;
-    };
+export default function useUnitOfMeasures(initialPageSize = 20) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [total, setTotal] = useState(0);
 
-    const getById = async (id) => {
-        const response = await UnitOfMeasurementService.getById(id);
-        return response.data;
-    };
+  const token = useLoginStore((s) => s.token);
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
 
-    const create = async (uom) => {
-        const response = await UnitOfMeasurementService.create(uom);
-        return response.data;
-    };
+  const fetchUnits = useCallback(async (page = pageNumber, size = pageSize) => {
+    if (!token) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await UnitOfMeasureService.getAll({ pageNumber: page, pageSize: size });
+      const list = data?.items ?? data?.data ?? data ?? [];
+      if (!alive.current) return;
+      setItems(Array.isArray(list) ? list : []);
+      setTotal(data?.total ?? data?.count ?? list.length ?? 0);
+      setPageNumber(page);
+      setPageSize(size);
+    } catch (err) {
+      if (!alive.current) return;
+      setError(err?.response?.data?._message || err.message);
+    } finally {
+      if (alive.current) setLoading(false);
+    }
+  }, [pageNumber, pageSize, token]);
 
-    const update = async (id, payload) => {
-        const response = await UnitOfMeasurementService.update(id, payload);
-        return response.data;
-    };
+  useEffect(() => {
+    if (token) fetchUnits(1, initialPageSize);
+  }, [token, initialPageSize, fetchUnits]);
 
-    const remove = async (id) => {
-        const response = await UnitOfMeasurementService.remove(id);
-        return response.data;
-    };
-
-    return { getAll, getById, create, update, remove };
-};
-
-export default useUnitOfMeasurement;
+  return {
+    items, loading, error, total, pageNumber, pageSize,
+    setPageNumber, setPageSize, fetchUnits,
+  };
+}

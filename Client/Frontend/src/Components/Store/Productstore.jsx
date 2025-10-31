@@ -1,56 +1,50 @@
-// src/store/Productstore.jsx
-import { create } from 'zustand';            // <-- FIX: named import
-import ProductService from '../Api/Productapi';
+// src/store/ProductStore.js
+import { create } from "zustand";
+import ProductService from "../Api/Productapi";
+import useLoginStore from "./Loginstore";
 
 const useProductStore = create((set, get) => ({
-  // ---- state
   products: [],
+  total: 0,
   loading: false,
   error: null,
 
-  // ---- actions
-  fetchProducts: async () => {
+  fetchProducts: async (pagination = { pageNumber: 1, pageSize: 50 }) => {
+    const token = useLoginStore.getState().token;
+    if (!token) {
+      set({ error: "Please log in." });
+      return;
+    }
+
     set({ loading: true, error: null });
     try {
-      const resp = await ProductService.getAll();
-      // adapt if your API wraps data: resp?._data ?? resp
-      const data = resp?._data ?? resp ?? [];
-      set({ products: data, loading: false });
+      const data = await ProductService.getAll(pagination);
+      const list = data?.items ?? data?.data ?? data ?? [];
+      const total = data?.total ?? data?.count ?? list.length ?? 0;
+      set({ products: Array.isArray(list) ? list : [], total });
     } catch (err) {
-      set({ error: err?.message || 'Failed to load products', loading: false });
+      set({ error: err?.response?.data?._message || "Failed to load products." });
+    } finally {
+      set({ loading: false });
     }
   },
 
   createProduct: async (payload) => {
-    set({ loading: true, error: null });
-    try {
-      const resp = await ProductService.create(payload);
-      const newProduct = resp?._data ?? resp;
-      set((state) => ({
-        products: [...state.products, newProduct],
-        loading: false,
-      }));
-      return true;
-    } catch (err) {
-      set({ error: err?.message || 'Failed to create product', loading: false });
-      return false;
-    }
+    const token = useLoginStore.getState().token;
+    if (!token) throw new Error("Not authenticated");
+    return ProductService.create(payload);
+  },
+
+  updateProduct: async (id, payload) => {
+    const token = useLoginStore.getState().token;
+    if (!token) throw new Error("Not authenticated");
+    return ProductService.update(id, payload);
   },
 
   deleteProduct: async (id) => {
-    set({ loading: true, error: null });
-    try {
-      await ProductService.remove(id);
-      set((state) => ({
-        // adjust id key if your API uses _id or productId
-        products: state.products.filter((p) => p.id !== id && p._id !== id && p.productId !== id),
-        loading: false,
-      }));
-      return true;
-    } catch (err) {
-      set({ error: err?.message || 'Failed to delete product', loading: false });
-      return false;
-    }
+    const token = useLoginStore.getState().token;
+    if (!token) throw new Error("Not authenticated");
+    return ProductService.remove(id);
   },
 }));
 

@@ -67,33 +67,32 @@ const ProfessionalSidebar = () => {
       children: [
         { id: 'products', title: 'Products', icon: Package, path: '/inventory/products' },
         { id: 'categories', title: 'Categories', icon: Grid3X3, path: '/inventory/categories' },
-        { id: 'Vendor', title: 'Stock Management', icon: Warehouse, path: '/inventory/stock' },
-        { id: 'Warehouse', title: 'Suppliers', icon: Truck, path: '/inventory/suppliers' }
+        { id: 'Vendor', title: 'Vendor', icon: Warehouse, path: '/inventory/stock' },
+        { id: 'Warehouse', title: 'Warehouse', icon: Truck, path: '/inventory/suppliers' },
+        { id: 'Measurement', title: 'Unit of Measurement ', icon: TrendingUp, path: '/reports/measurement' },
+
       ]
     },
-    {
-      id: 'orders',
-      title: 'Orders',
-      icon: ShoppingCart,
-      children: [
-        { id: 'all-orders', title: 'All Orders', icon: FileText, path: '/orders/all' },
-        { id: 'pending', title: 'Pending', icon: TrendingUp, path: '/orders/pending', badge: '12' },
-        { id: 'completed', title: 'Completed', icon: Shield, path: '/orders/completed' },
-        { id: 'returns', title: 'Returns', icon: CreditCard, path: '/orders/returns' }
-      ]
-    },
+    // {
+    //   id: 'orders',
+    //   title: 'Orders',
+    //   icon: ShoppingCart,
+    //   children: [
+    //     { id: 'all-orders', title: 'All Orders', icon: FileText, path: '/orders/all' },
+    //     { id: 'pending', title: 'Pending', icon: TrendingUp, path: '/orders/pending', badge: '12' },
+    //     { id: 'completed', title: 'Completed', icon: Shield, path: '/orders/completed' },
+    //     { id: 'returns', title: 'Returns', icon: CreditCard, path: '/orders/returns' }
+    //   ]
+    // },
 
     
-    {
-      id: 'reports',
-      title: 'Management',
-      icon: FileText,
-      children: [
-        { id: 'Measurement', title: 'Unit of Measurement ', icon: TrendingUp, path: '/reports/measurement' },
-        { id: 'User management', title: 'User management ', icon: Package, path: '/reports/user-management' },
-        { id: 'User profile', title: 'User Profile', icon: Users, path: '/reports/userprofile' }
-      ]
-    }
+    // {
+    //   id: 'reports',
+    //   title: 'Management',
+    //   icon: FileText,
+    //   children: [
+    //   ]
+    // }
   ];
 
   const bottomMenuItems = [
@@ -251,7 +250,7 @@ const ProfessionalSidebar = () => {
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
+              <p className="text-sm font-medium text-gray-900 truncate">NDH Technology</p>
               <p className="text-xs text-gray-500 truncate">Administrator</p>
             </div>
           )}
