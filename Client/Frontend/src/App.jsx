@@ -2,6 +2,7 @@
 import React from "react";
 import "./index.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import Layout from "./Components/Dashboard/Layout";
 import Master from "./Components/Dashboard/Master";
 import Dashboard from "./Components/Dashboard/Dashboard";
@@ -15,14 +16,16 @@ import UserProfile from "./Components/Management/UserProfile";
 import Analytics from "./Components/Analytics/Analytics";
 import LoginPage from "./Components/Authentication/Login";
 import Setting from "./Components/Settings/Setting";
+
 import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
 import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
+import CategoryCRUD from "./Components/Inventory/CategoryCRUD";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public-only route */}
+        {/* Public */}
         <Route
           path="/login"
           element={
@@ -32,7 +35,7 @@ function App() {
           }
         />
 
-        {/* Protected routes */}
+        {/* Protected Dashboard */}
         <Route
           path="/"
           element={
@@ -41,28 +44,31 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* redirect "/" to "/dashboard" */}
           <Route index element={<Navigate to="dashboard" replace />} />
 
-          {/* NOTE: child paths are RELATIVE (no leading slash) */}
           <Route path="master" element={<Master />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<Analytics />} />
 
+          {/* Inventory */}
           <Route path="inventory/products" element={<Addproducts />} />
           <Route path="inventory/categories" element={<AddCategory />} />
           <Route path="inventory/stock" element={<StockManagement />} />
           <Route path="inventory/suppliers" element={<Suppliers />} />
 
+          {/* Reports */}
           <Route path="reports/measurement" element={<UnitManagement />} />
           <Route path="reports/user-management" element={<UserManagement />} />
           <Route path="reports/userprofile" element={<UserProfile />} />
 
+          {/* CATEGORY CRUD – FIXED PATH */}
+          <Route path="inventory/category-rdu" element={<CategoryCRUD />} />
+
           <Route path="settings" element={<Setting />} />
         </Route>
 
-        {/* Catch-all (optional): */}
-        {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

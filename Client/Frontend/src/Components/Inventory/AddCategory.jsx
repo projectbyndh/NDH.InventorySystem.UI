@@ -1,6 +1,7 @@
 // src/Components/Inventory/CategoryForm.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import CategoryService from "../Api/Categoryapi";
+import { Link } from "react-router-dom";
 
 const required = <span className="text-red-500">*</span>;
 
@@ -279,7 +280,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <><form onSubmit={onSubmit} className="space-y-6">
       {/* Name & Code */}
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">
@@ -326,16 +327,14 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             value={parentCategoryId}
             onChange={setParentCategoryId}
             placeholder={loadingParents ? "Loading categories..." : "None"}
-            disabled={loadingParents}
-          />
+            disabled={loadingParents} />
         </label>
         <label className="block">
           <div className="mb-1 text-[13px] font-medium text-slate-700">Unit of Measure</div>
           <Select
             options={unitOptions}
             value={defaultUnitOfMeasure}
-            onChange={setDefaultUnitOfMeasure}
-          />
+            onChange={setDefaultUnitOfMeasure} />
         </label>
       </div>
 
@@ -351,8 +350,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             type="number"
             min={0}
             value={hierarchyLevel}
-            onChange={(e) => setHierarchyLevel(Number(e.target.value))}
-          />
+            onChange={(e) => setHierarchyLevel(Number(e.target.value))} />
         </label>
       </div>
 
@@ -377,14 +375,12 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
                 placeholder="Subcategory name"
                 value={sub.name}
                 onChange={(e) => updateSubcategory(idx, "name", e.target.value)}
-                className="flex-1"
-              />
+                className="flex-1" />
               <Input
                 placeholder="Description (optional)"
                 value={sub.description}
                 onChange={(e) => updateSubcategory(idx, "description", e.target.value)}
-                className="flex-1"
-              />
+                className="flex-1" />
               <button
                 type="button"
                 onClick={() => removeSubcategory(idx)}
@@ -407,16 +403,14 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
           <input
             type="checkbox"
             checked={requiresSerialNumbers}
-            onChange={() => setRequiresSerialNumbers((v) => !v)}
-          />
+            onChange={() => setRequiresSerialNumbers((v) => !v)} />
           Requires Serial Numbers
         </label>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={trackExpiration}
-            onChange={() => setTrackExpiration((v) => !v)}
-          />
+            onChange={() => setTrackExpiration((v) => !v)} />
           Track Expiration
         </label>
       </div>
@@ -446,7 +440,14 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             Cancel
           </button>
         )}
+
+        <Link
+          to="/inventory/category-rdu"
+          className="rounded-xl border border-slate-300 px-5 py-2 text-sm inline-flex items-center"
+        >
+          Open category form
+        </Link>
       </div>
-    </form>
+    </form></>
   );
 }
