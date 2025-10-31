@@ -8,7 +8,6 @@ import Master from "./Components/Dashboard/Master";
 import Dashboard from "./Components/Dashboard/Dashboard";
 import Addproducts from "./Components/Inventory/Addproducts";
 import AddCategory from "./Components/Inventory/AddCategory";
-import StockManagement from "./Components/Inventory/StockManagement";
 import Suppliers from "./Components/Inventory/Suppliers";
 import UnitManagement from "./Components/Management/UnitManagement";
 import UserManagement from "./Components/Management/UserManagement";
@@ -16,7 +15,7 @@ import UserProfile from "./Components/Management/UserProfile";
 import Analytics from "./Components/Analytics/Analytics";
 import LoginPage from "./Components/Authentication/Login";
 import Setting from "./Components/Settings/Setting";
-
+import VendorManager from "./Components/Inventory/VendorManager";
 import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
 import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
 import CategoryCRUD from "./Components/Inventory/CategoryCRUD";
@@ -53,7 +52,7 @@ function App() {
           {/* Inventory */}
           <Route path="inventory/products" element={<Addproducts />} />
           <Route path="inventory/categories" element={<AddCategory />} />
-          <Route path="inventory/stock" element={<StockManagement />} />
+          <Route path="inventory/vendordetails" element={<VendorManager />} />
           <Route path="inventory/suppliers" element={<Suppliers />} />
 
           {/* Reports */}
@@ -64,6 +63,7 @@ function App() {
           {/* CATEGORY CRUD – FIXED PATH */}
           <Route path="inventory/category-rdu" element={<CategoryCRUD />} />
 
+          {/* vendor details*/}
           <Route path="settings" element={<Setting />} />
         </Route>
 

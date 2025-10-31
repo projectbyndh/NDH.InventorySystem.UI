@@ -67,9 +67,9 @@ const ProfessionalSidebar = () => {
       children: [
         { id: 'products', title: 'Products', icon: Package, path: '/inventory/products' },
         { id: 'categories', title: 'Categories', icon: Grid3X3, path: '/inventory/categories' },
-        { id: 'Vendor', title: 'Vendor', icon: Warehouse, path: '/inventory/stock' },
-        { id: 'Warehouse', title: 'Warehouse', icon: Truck, path: '/inventory/suppliers' },
-        { id: 'Measurement', title: 'Unit of Measurement ', icon: TrendingUp, path: '/reports/measurement' },
+        { id: 'vendor', title: 'Vendor', icon: Warehouse, path: '/inventory/vendordetails' },
+        { id: 'warehouse', title: 'Warehouse', icon: Truck, path: '/inventory/suppliers' },
+        { id: 'measurement', title: 'Unit of Measurement ', icon: TrendingUp, path: '/reports/measurement' },
 
       ]
     },
