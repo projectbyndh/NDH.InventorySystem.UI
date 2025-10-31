@@ -11,8 +11,9 @@ const unwrap = (res) => {
   return body;
 };
 
+// src/Components/Api/Categoryapi.jsx
+
 const CategoryService = {
-  // GET with PascalCase
   getAll: async (pagination = { pageNumber: 1, pageSize: 50 }) => {
     const res = await axiosInstance.get("/Category/getAll", {
       params: {
@@ -25,59 +26,60 @@ const CategoryService = {
 
   getById: (id) => axiosInstance.get(`/Category/getById/${id}`).then(unwrap),
 
- create: (payload) => {
-  const dto = {
-    Name: payload.name?.trim(),
-    Code: payload.code?.trim() || undefined,
-    Description: payload.description?.trim() || undefined,
-    ImageUrl: payload.imageUrl || undefined,
-    ParentCategoryId: payload.parentCategoryId === "0" ? undefined : Number(payload.parentCategoryId),
-    HasVariants: payload.hasVariants,
-    RequiresSerialNumbers: payload.requiresSerialNumbers,
-    TrackExpiration: payload.trackExpiration,
-    DefaultUnitOfMeasure: payload.defaultUnitOfMeasure || undefined,
-    TaxonomyPath: payload.taxonomyPath?.trim() || undefined,
-    HierarchyLevel: payload.hierarchyLevel,
-    SubCategories: (payload.subCategories || [])
+  // 🟢 FIX HERE — remove `{ dto }` wrapper
+// src/Components/Api/Categoryapi.jsx
+create: (payload) => {
+  const body = {
+    name: payload.name?.trim(),
+    code: payload.code?.trim() || undefined,
+    description: payload.description?.trim() || undefined,
+    imageUrl: payload.imageUrl || undefined,
+    parentCategoryId: payload.parentCategoryId === "0" ? undefined : Number(payload.parentCategoryId),
+    hasVariants: !!payload.hasVariants,
+    requiresSerialNumbers: !!payload.requiresSerialNumbers,
+    trackExpiration: !!payload.trackExpiration,
+    defaultUnitOfMeasure: payload.defaultUnitOfMeasure || undefined,
+    taxonomyPath: payload.taxonomyPath?.trim() || undefined,
+    hierarchyLevel: payload.hierarchyLevel,
+    subCategories: (payload.subCategories || [])
       .filter(s => s.name?.trim())
       .map(s => ({
-        Name: s.name.trim(),
-        Description: s.description?.trim() || undefined,
+        name: s.name.trim(),
+        description: s.description?.trim() || undefined,
       })),
   };
 
-  console.log("CREATE PAYLOAD:", { dto });
-
-  return axiosInstance.post("/Category/create", { dto }).then(unwrap);
+  console.log("CREATE PAYLOAD:", body); // confirm camelCase + name present
+  return axiosInstance.post("/Category/create", body).then(unwrap);
 },
 
-  update: (id, payload) => {
-    const dto = {
-      Name: payload.name?.trim(),
-      Code: payload.code?.trim() || undefined,
-      Description: payload.description?.trim() || undefined,
-      ImageUrl: payload.imageUrl || undefined,
-      ParentCategoryId: payload.parentCategoryId === "0" ? undefined : Number(payload.parentCategoryId),
-      HasVariants: payload.hasVariants,
-      RequiresSerialNumbers: payload.requiresSerialNumbers,
-      TrackExpiration: payload.trackExpiration,
-      DefaultUnitOfMeasure: payload.defaultUnitOfMeasure || undefined,
-      TaxonomyPath: payload.taxonomyPath?.trim() || undefined,
-      HierarchyLevel: payload.hierarchyLevel,
-      SubCategories: (payload.subCategories || [])
-        .filter(s => s.name?.trim())
-        .map(s => ({
-          Name: s.name.trim(),
-          Description: s.description?.trim() || undefined,
-        })),
-    };
+update: (id, payload) => {
+  const body = {
+    name: payload.name?.trim(),
+    code: payload.code?.trim() || undefined,
+    description: payload.description?.trim() || undefined,
+    imageUrl: payload.imageUrl || undefined,
+    parentCategoryId: payload.parentCategoryId === "0" ? undefined : Number(payload.parentCategoryId),
+    hasVariants: !!payload.hasVariants,
+    requiresSerialNumbers: !!payload.requiresSerialNumbers,
+    trackExpiration: !!payload.trackExpiration,
+    defaultUnitOfMeasure: payload.defaultUnitOfMeasure || undefined,
+    taxonomyPath: payload.taxonomyPath?.trim() || undefined,
+    hierarchyLevel: payload.hierarchyLevel,
+    subCategories: (payload.subCategories || [])
+      .filter(s => s.name?.trim())
+      .map(s => ({
+        name: s.name.trim(),
+        description: s.description?.trim() || undefined,
+      })),
+  };
 
-    return axiosInstance
-      .put(`/Category/update/${id}`, { dto })
-      .then(unwrap);
-  },
+  return axiosInstance.put(`/Category/update/${id}`, body).then(unwrap);
+},
+
 
   remove: (id) => axiosInstance.delete(`/Category/delete/${id}`).then(unwrap),
 };
 
 export default CategoryService;
+

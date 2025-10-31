@@ -246,7 +246,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         description: description.trim() || undefined,
         imageUrl: imageUrl || undefined,
         parentCategoryId: parentCategoryId === "0" ? undefined : Number(parentCategoryId),
-        hasVariants,
+        hasVariants,  
         requiresSerialNumbers,
         trackExpiration,
         defaultUnitOfMeasure: defaultUnitOfMeasure || undefined,
