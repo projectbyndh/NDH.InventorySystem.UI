@@ -68,7 +68,7 @@ const ProfessionalSidebar = () => {
         { id: 'products', title: 'Products', icon: Package, path: '/inventory/products' },
         { id: 'categories', title: 'Categories', icon: Grid3X3, path: '/inventory/categories' },
         { id: 'vendor', title: 'Vendor', icon: Warehouse, path: '/inventory/vendordetails' },
-        { id: 'warehouse', title: 'Warehouse', icon: Truck, path: '/inventory/suppliers' },
+        { id: 'warehouse', title: 'Warehouse', icon: Truck, path: '/inventory/warehouse' },
         { id: 'measurement', title: 'Unit of Measurement ', icon: TrendingUp, path: '/reports/measurement' },
 
       ]

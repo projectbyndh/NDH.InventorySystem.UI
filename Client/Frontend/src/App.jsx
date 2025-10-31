@@ -8,7 +8,6 @@ import Master from "./Components/Dashboard/Master";
 import Dashboard from "./Components/Dashboard/Dashboard";
 import Addproducts from "./Components/Inventory/Addproducts";
 import AddCategory from "./Components/Inventory/AddCategory";
-import Suppliers from "./Components/Inventory/Suppliers";
 import UnitManagement from "./Components/Management/UnitManagement";
 import UserManagement from "./Components/Management/UserManagement";
 import UserProfile from "./Components/Management/UserProfile";
@@ -19,6 +18,7 @@ import VendorManager from "./Components/Inventory/VendorManager";
 import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
 import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
 import CategoryCRUD from "./Components/Inventory/CategoryCRUD";
+import WareHouse from "./Components/Inventory/WareHouse";
 
 function App() {
   return (
@@ -53,7 +53,7 @@ function App() {
           <Route path="inventory/products" element={<Addproducts />} />
           <Route path="inventory/categories" element={<AddCategory />} />
           <Route path="inventory/vendordetails" element={<VendorManager />} />
-          <Route path="inventory/suppliers" element={<Suppliers />} />
+          <Route path="inventory/warehouse" element={<WareHouse />} />
 
           {/* Reports */}
           <Route path="reports/measurement" element={<UnitManagement />} />

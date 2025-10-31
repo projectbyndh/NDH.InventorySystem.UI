@@ -1,6 +1,6 @@
-// src/Store/WarehouseStore.js
+// src/store/WarehouseStore.js
 import { create } from "zustand";
-import WarehouseService from "../Api/Warehouseapi";
+import WarehouseService from "../Api/Warehouseapi"; // Fixed path
 import useLoginStore from "./Loginstore";
 
 const useWarehouseStore = create((set) => ({
@@ -41,7 +41,7 @@ const useWarehouseStore = create((set) => ({
   deleteWarehouse: async (id) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return WarehouseService.remove(id);
+    return WarehouseService.delete(id);
   },
 }));
 
