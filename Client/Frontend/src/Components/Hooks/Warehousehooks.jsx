@@ -1,6 +1,6 @@
 // src/hooks/useWarehouse.jsx
 import { useState, useEffect, useCallback } from "react";
-import WarehouseService from "../Api/Warehouseapi"; 
+import WarehouseService from "../Api/Warehouseapi";     
 import useLoginStore from "../Store/Loginstore";
 
 export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {

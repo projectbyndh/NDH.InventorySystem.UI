@@ -5,47 +5,70 @@ import useLoginStore from "./Loginstore";
 
 const useProductStore = create((set, get) => ({
   products: [],
+  product: null,
   total: 0,
   loading: false,
   error: null,
 
-  fetchProducts: async (pagination = { pageNumber: 1, pageSize: 50 }) => {
+  // LIST
+  fetchProducts: async (pagination = { pageNumber: 1, pageSize: 20 }) => {
     const token = useLoginStore.getState().token;
-    if (!token) {
-      set({ error: "Please log in." });
-      return;
-    }
+    if (!token) return set({ error: "Login required" });
 
     set({ loading: true, error: null });
     try {
       const data = await ProductService.getAll(pagination);
-      const list = data?.items ?? data?.data ?? data ?? [];
-      const total = data?.total ?? data?.count ?? list.length ?? 0;
-      set({ products: Array.isArray(list) ? list : [], total });
+      const list = Array.isArray(data?.items) ? data.items : [];
+      const total = data?.total ?? list.length;
+      set({ products: list, total });
     } catch (err) {
-      set({ error: err?.response?.data?._message || "Failed to load products." });
+      set({ error: err?.response?.data?._message || "Failed to load products" });
     } finally {
       set({ loading: false });
     }
   },
 
+  // GET BY ID
+  fetchProductById: async (id) => {
+    const token = useLoginStore.getState().token;
+    if (!token) throw new Error("Not authenticated");
+
+    set({ loading: true, error: null });
+    try {
+      const data = await ProductService.getById(id);
+      set({ product: data });
+      return data;
+    } catch (err) {
+      const msg = err?.response?.data?._message || "Product not found";
+      set({ error: msg });
+      throw err;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // CREATE
   createProduct: async (payload) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return ProductService.create(payload);
+    return await ProductService.create(payload);
   },
 
+  // UPDATE
   updateProduct: async (id, payload) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return ProductService.update(id, payload);
+    return await ProductService.update(id, payload);
   },
 
+  // DELETE
   deleteProduct: async (id) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return ProductService.remove(id);
+    return await ProductService.remove(id);
   },
+
+  clearProduct: () => set({ product: null }),
 }));
 
 export default useProductStore;
