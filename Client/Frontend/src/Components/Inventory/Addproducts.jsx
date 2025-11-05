@@ -4,12 +4,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import useProductStore from "../Store/Productstore";
 import useCategoryStore from "../Store/Categorystore";
 import useVendorStore from "../Store/Vendorstore";
+import useUnitOfMeasureStore from "../Store/Unitofmeasurement"; 
 import {
   Plus, Trash2, Loader2, ChevronLeft, AlertCircle, CheckCircle,
-  Package, DollarSign, Tag, Box, Hash, Info, Edit3
+  Package, DollarSign, Tag, Box, Hash, Info, Layers, Settings, Cpu
 } from "lucide-react";
-import React from "react";
 
+import React from "react";
 export default function AddProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function AddProduct() {
   const { createProduct, updateProduct, fetchProductById } = useProductStore();
   const { categories = [], fetchCategories } = useCategoryStore();
   const { vendors = [], fetchVendors } = useVendorStore();
+  const { units = [], fetchUnits } = useUnitOfMeasureStore(); // FIXED: units + fetchUnits
 
   const initialForm = {
     name: "", description: "", sku: "", price: 0, cost: 0,
@@ -34,15 +36,21 @@ export default function AddProduct() {
   const [dataLoading, setDataLoading] = useState(true);
   const nameInputRef = useRef(null);
 
+  // Load dropdown data
   useEffect(() => {
     const load = async () => {
       setDataLoading(true);
-      await Promise.allSettled([fetchCategories(), fetchVendors()]);
+      await Promise.allSettled([
+        fetchCategories(),
+        fetchVendors(),
+        fetchUnits?.({ pageNumber: 1, pageSize: 100 }) // Load all units
+      ]);
       setDataLoading(false);
     };
     load();
-  }, []);
+  }, [fetchCategories, fetchVendors, fetchUnits]);
 
+  // Load product for edit
   useEffect(() => {
     if (isEdit && id) {
       const load = async () => {
@@ -56,7 +64,12 @@ export default function AddProduct() {
             unitOfMeasureId: p.unitOfMeasureId || 0,
             primaryVendorId: p.primaryVendorId || 0,
             variantGroupId: p.variantGroupId || "",
-            variants: p.variants || [],
+            variants: (p.variants || []).map(v => ({
+              ...v,
+              attributesJson: typeof v.attributesJson === "object"
+                ? JSON.stringify(v.attributesJson, null, 2)
+                : v.attributesJson || "{}"
+            })),
             attributes: p.attributes || [],
           });
         } catch {
@@ -67,11 +80,23 @@ export default function AddProduct() {
       };
       load();
     }
-  }, [id, isEdit]);
+  }, [id, isEdit, fetchProductById]);
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" }));
+  };
+
+  const handleVariantChange = (index, field, value) => {
+    const newVariants = [...form.variants];
+    newVariants[index] = { ...newVariants[index], [field]: value };
+    setForm({ ...form, variants: newVariants });
+  };
+
+  const handleAttributeChange = (index, field, value) => {
+    const newAttrs = [...form.attributes];
+    newAttrs[index] = { ...newAttrs[index], [field]: value };
+    setForm({ ...form, attributes: newAttrs });
   };
 
   const addVariant = () => {
@@ -113,38 +138,55 @@ export default function AddProduct() {
     setSuccess(false);
 
     try {
+      // ---------- BUILD PAYLOAD ----------
       const payload = {
         name: form.name.trim(),
-        description: form.description.trim(),
+        description: form.description.trim() || null,
         sku: form.sku.trim(),
         price: parseFloat(form.price) || 0,
         cost: parseFloat(form.cost) || 0,
-        quantityInStock: parseInt(form.quantityInStock) || 0,
-        minimumStockLevel: parseInt(form.minimumStockLevel) || 0,
-        reorderQuantity: parseInt(form.reorderQuantity) || 0,
-        categoryId: parseInt(form.categoryId) || 0,
-        subCategoryId: parseInt(form.subCategoryId) || 0,
-        unitOfMeasureId: parseInt(form.unitOfMeasureId) || 0,
-        primaryVendorId: parseInt(form.primaryVendorId) || 0,
+        quantityInStock: parseInt(form.quantityInStock, 10) || 0,
+        minimumStockLevel: parseInt(form.minimumStockLevel, 10) || 0,
+        reorderQuantity: parseInt(form.reorderQuantity, 10) || 0,
+        categoryId: parseInt(form.categoryId, 10) || null,
         status: form.status,
         trackInventory: !!form.trackInventory,
         isSerialized: !!form.isSerialized,
         hasExpiry: !!form.hasExpiry,
-        variantGroupId: form.variantGroupId?.trim() || undefined,
-        variants: form.variants
-          .filter(v => v.sku?.trim() || v.name?.trim())
-          .map(v => ({
-            name: v.name?.trim(),
-            sku: v.sku?.trim(),
-            price: parseFloat(v.price) || 0,
-            stockQuantity: parseInt(v.stockQuantity) || 0,
-            attributesJson: v.attributesJson?.trim() || "{}"
-          })),
-        attributes: form.attributes
-          .filter(a => a.name?.trim() && a.value?.trim())
-          .map(a => ({ name: a.name.trim(), value: a.value.trim() }))
       };
 
+      // Optional FKs
+      if (form.subCategoryId) payload.subCategoryId = parseInt(form.subCategoryId, 10);
+      if (form.unitOfMeasureId) payload.unitOfMeasureId = parseInt(form.unitOfMeasureId, 10);
+      if (form.primaryVendorId) payload.primaryVendorId = parseInt(form.primaryVendorId, 10);
+      if (form.variantGroupId?.trim()) payload.variantGroupId = form.variantGroupId.trim();
+
+      // Variants
+      if (form.variants?.length) {
+        payload.variants = form.variants
+          .filter(v => v.sku?.trim() || v.name?.trim())
+          .map(v => ({
+            name: v.name?.trim() || null,
+            sku: v.sku?.trim() || null,
+            price: parseFloat(v.price) || 0,
+            stockQuantity: parseInt(v.stockQuantity, 10) || 0,
+            attributesJson: v.attributesJson?.trim() || null,
+          }));
+      }
+
+      // Attributes
+      if (form.attributes?.length) {
+        payload.attributes = form.attributes
+          .filter(a => a.name?.trim() && a.value?.trim())
+          .map(a => ({
+            name: a.name.trim(),
+            value: a.value.trim(),
+          }));
+      }
+
+      console.log("CREATE PAYLOAD →", JSON.stringify(payload, null, 2));
+
+      // ---------- CALL API ----------
       if (isEdit) {
         await updateProduct(parseInt(id), payload);
       } else {
@@ -154,7 +196,7 @@ export default function AddProduct() {
       setSuccess(true);
       setTimeout(() => navigate("/inventory/product-crud"), 1200);
     } catch (err) {
-      setErrors({ submit: err.message || "Save failed" });
+      setErrors({ submit: err?.message || "Save failed" });
     } finally {
       setLoading(false);
     }
@@ -172,7 +214,7 @@ export default function AddProduct() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-3 rounded-xl bg-white shadow hover:shadow-md">
+          <button onClick={() => navigate(-1)} className="p-3 rounded-xl bg-white shadow hover:shadow-md transition">
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div>
@@ -183,7 +225,7 @@ export default function AddProduct() {
 
         {success && (
           <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800">
-            <CheckCircle className="w-6 h-6" /> Product saved!
+            <CheckCircle className="w-6 h-6" /> Product saved successfully!
           </div>
         )}
 
@@ -200,8 +242,13 @@ export default function AddProduct() {
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Name *</label>
                   <div className="relative">
                     <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input ref={nameInputRef} value={form.name} onChange={e => handleChange("name", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.name ? "border-red-500" : "border-slate-300"} focus:ring-2 focus:ring-slate-500`} />
+                    <input
+                      ref={nameInputRef}
+                      value={form.name}
+                      onChange={e => handleChange("name", e.target.value)}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.name ? "border-red-500" : "border-slate-300"} focus:ring-2 focus:ring-slate-500 transition`}
+                      placeholder="Product name"
+                    />
                   </div>
                   {errors.name && <p className="mt-2 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.name}</p>}
                 </div>
@@ -210,8 +257,12 @@ export default function AddProduct() {
                   <label className="block text-sm font-semibold text-slate-800 mb-2">SKU *</label>
                   <div className="relative">
                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input value={form.sku} onChange={e => handleChange("sku", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.sku ? "border-red-500" : "border-slate-300"} focus:ring-2 focus:ring-slate-500`} />
+                    <input
+                      value={form.sku}
+                      onChange={e => handleChange("sku", e.target.value)}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.sku ? "border-red-500" : "border-slate-300"} focus:ring-2 focus:ring-slate-500 transition`}
+                      placeholder="Unique SKU"
+                    />
                   </div>
                   {errors.sku && <p className="mt-2 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.sku}</p>}
                 </div>
@@ -220,18 +271,99 @@ export default function AddProduct() {
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Price *</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input type="number" step="0.01" value={form.price} onChange={e => handleChange("price", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.price ? "border-red-500" : "border-slate-300"} focus:ring-2 focus:ring-slate-500`} />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.price}
+                      onChange={e => handleChange("price", e.target.value)}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.price ? "border-red-500" : "border-slate-300"} focus:ring-2 focus:ring-slate-500 transition`}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  {errors.price && <p className="mt-2 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.price}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Cost</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.cost}
+                      onChange={e => handleChange("cost", e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                      placeholder="0.00"
+                    />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Category *</label>
-                  <select value={form.categoryId} onChange={e => handleChange("categoryId", parseInt(e.target.value))}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500">
-                    <option value={0}>Select</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <select
+                    value={form.categoryId}
+                    onChange={e => handleChange("categoryId", parseInt(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                  >
+                    <option value={0}>Select Category</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
                   </select>
+                  {errors.categoryId && <p className="mt-2 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.categoryId}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Sub Category</label>
+                  <select
+                    value={form.subCategoryId}
+                    onChange={e => handleChange("subCategoryId", parseInt(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                  >
+                    <option value={0}>None</option>
+                    {/* Add subcategories later */}
+                  </select>
+                </div>
+
+                {/* UNIT OF MEASURE - FIXED */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Unit of Measure</label>
+                  <select
+                    value={form.unitOfMeasureId}
+                    onChange={e => handleChange("unitOfMeasureId", parseInt(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                  >
+                    <option value={0}>None</option>
+                    {units.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Primary Vendor</label>
+                  <select
+                    value={form.primaryVendorId}
+                    onChange={e => handleChange("primaryVendorId", parseInt(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                  >
+                    <option value={0}>None</option>
+                    {vendors.map(v => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Variant Group ID (optional)</label>
+                  <input
+                    value={form.variantGroupId}
+                    onChange={e => handleChange("variantGroupId", e.target.value)}
+                    placeholder="e.g. MACBOOK-PRO-16"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                  />
                 </div>
               </div>
             </section>
@@ -239,28 +371,229 @@ export default function AddProduct() {
             {/* INVENTORY */}
             <section className="border-t pt-8">
               <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <Box className="w-6 h-6 text-slate-700" /> Inventory
+                <Box className="w-6 h-6 text-slate-700" /> Inventory & Stock
               </h2>
               <div className="grid md:grid-cols-3 gap-6">
-                <input type="number" placeholder="Stock" value={form.quantityInStock} onChange={e => handleChange("quantityInStock", e.target.value)} className="px-4 py-3 rounded-xl border border-slate-300" />
-                <input type="number" placeholder="Min Stock" value={form.minimumStockLevel} onChange={e => handleChange("minimumStockLevel", e.target.value)} className="px-4 py-3 rounded-xl border border-slate-300" />
-                <input type="number" placeholder="Reorder Qty" value={form.reorderQuantity} onChange={e => handleChange("reorderQuantity", e.target.value)} className="px-4 py-3 rounded-xl border border-slate-300" />
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Current Stock</label>
+                  <input
+                    type="number"
+                    value={form.quantityInStock}
+                    onChange={e => handleChange("quantityInStock", e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Min Stock Level</label>
+                  <input
+                    type="number"
+                    value={form.minimumStockLevel}
+                    onChange={e => handleChange("minimumStockLevel", e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Reorder Quantity</label>
+                  <input
+                    type="number"
+                    value={form.reorderQuantity}
+                    onChange={e => handleChange("reorderQuantity", e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-6 flex-wrap">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.trackInventory}
+                    onChange={e => handleChange("trackInventory", e.target.checked)}
+                    className="w-5 h-5 text-slate-600 rounded focus:ring-slate-500"
+                  />
+                  <span className="text-slate-700 font-medium">Track Inventory</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isSerialized}
+                    onChange={e => handleChange("isSerialized", e.target.checked)}
+                    className="w-5 h-5 text-slate-600 rounded focus:ring-slate-500"
+                  />
+                  <span className="text-slate-700 font-medium">Serialized</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.hasExpiry}
+                    onChange={e => handleChange("hasExpiry", e.target.checked)}
+                    className="w-5 h-5 text-slate-600 rounded focus:ring-slate-500"
+                  />
+                  <span className="text-slate-700 font-medium">Has Expiry Date</span>
+                </label>
               </div>
             </section>
 
-            {/* ATTRIBUTES & VARIANTS (same as before) */}
-            {/* ... add the rest from previous version ... */}
+            {/* DESCRIPTION */}
+            <section className="border-t pt-8">
+              <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <Info className="w-6 h-6 text-slate-700" /> Description
+              </h2>
+              <textarea
+                value={form.description}
+                onChange={e => handleChange("description", e.target.value)}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
+                placeholder="Product description (optional)"
+              />
+            </section>
+
+            {/* VARIANTS */}
+            <section className="border-t pt-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Layers className="w-6 h-6 text-slate-700" /> Product Variants
+                </h2>
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition"
+                >
+                  <Plus className="w-4 h-4" /> Add Variant
+                </button>
+              </div>
+
+              {form.variants.length === 0 ? (
+                <p className="text-slate-500 italic">No variants added</p>
+              ) : (
+                <div className="space-y-6">
+                  {form.variants.map((variant, i) => (
+                    <div key={i} className="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-semibold text-slate-800">Variant {i + 1}</h4>
+                        <button
+                          type="button"
+                          onClick={() => removeVariant(i)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <input
+                          placeholder="Variant Name"
+                          value={variant.name}
+                          onChange={e => handleVariantChange(i, "name", e.target.value)}
+                          className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                        />
+                        <input
+                          placeholder="Variant SKU"
+                          value={variant.sku}
+                          onChange={e => handleVariantChange(i, "sku", e.target.value)}
+                          className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Price"
+                          value={variant.price}
+                          onChange={e => handleVariantChange(i, "price", e.target.value)}
+                          className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Stock"
+                          value={variant.stockQuantity}
+                          onChange={e => handleVariantChange(i, "stockQuantity", e.target.value)}
+                          className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Attributes JSON *</label>
+                        <textarea
+                          value={variant.attributesJson}
+                          onChange={e => handleVariantChange(i, "attributesJson", e.target.value)}
+                          rows={3}
+                          className="w-full p-3 font-mono text-sm bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                          placeholder='{"Storage":"512GB","Color":"Space Gray"}'
+                        />
+                        <p className="mt-1 text-xs text-slate-500">Must be valid JSON string</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* ATTRIBUTES */}
+            <section className="border-t pt-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Settings className="w-6 h-6 text-slate-700" /> Custom Attributes
+                </h2>
+                <button
+                  type="button"
+                  onClick={addAttribute}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition"
+                >
+                  <Plus className="w-4 h-4" /> Add Attribute
+                </button>
+              </div>
+
+              {form.attributes.length === 0 ? (
+                <p className="text-slate-500 italic">No custom attributes</p>
+              ) : (
+                <div className="space-y-3">
+                  {form.attributes.map((attr, i) => (
+                    <div key={i} className="flex gap-3 items-center">
+                      <input
+                        placeholder="Key"
+                        value={attr.name}
+                        onChange={e => handleAttributeChange(i, "name", e.target.value)}
+                        className="flex-1 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                      />
+                      <input
+                        placeholder="Value"
+                        value={attr.value}
+                        onChange={e => handleAttributeChange(i, "value", e.target.value)}
+                        className="flex-1 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeAttribute(i)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* SUBMIT */}
-            {errors.submit && <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">{errors.submit}</div>}
+            {errors.submit && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" /> {errors.submit}
+              </div>
+            )}
 
             <div className="flex gap-4 pt-8">
-              <button type="submit" disabled={loading}
-                className="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-black">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-black disabled:opacity-50 transition"
+              >
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <>{isEdit ? "Update" : "Create"} Product</>}
               </button>
-              <button type="button" onClick={() => navigate(-1)}
-                className="flex-1 border-2 border-slate-300 text-slate-700 py-4 rounded-xl font-bold text-lg hover:bg-slate-50">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex-1 border-2 border-slate-300 text-slate-700 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 transition"
+              >
                 Cancel
               </button>
             </div>

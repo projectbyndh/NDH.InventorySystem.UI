@@ -1,4 +1,4 @@
-// src/store/UnitOfMeasureStore.js
+// src/Store/UnitOfMeasureStore.js
 import { create } from "zustand";
 import UnitOfMeasureService from "../Api/Unitofmeasurement";
 import useLoginStore from "./Loginstore";

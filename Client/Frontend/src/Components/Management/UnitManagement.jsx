@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
-  XCircle,
+  CheckCircle,
   Trash2 as TrashIcon
 } from "lucide-react";
 import React from "react";
