@@ -1,10 +1,14 @@
-// src/Components/Inventory/CategoryForm.jsx
+// src/components/Inventory/CategoryForm.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import CategoryService from "../Api/Categoryapi";
+import useUnitOfMeasureStore from "../Store/Unitofmeasurement"; // <-- NEW
 import { Link } from "react-router-dom";
 
 const required = <span className="text-red-500">*</span>;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable Input, Textarea, Select
+// ─────────────────────────────────────────────────────────────────────────────
 function Input(props) {
   return (
     <input
@@ -16,6 +20,7 @@ function Input(props) {
     />
   );
 }
+
 function Textarea(props) {
   return (
     <textarea
@@ -32,6 +37,7 @@ function Textarea(props) {
 function Select({ value, onChange, options, placeholder = "Choose one", disabled }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
   useEffect(() => {
     const f = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -39,7 +45,11 @@ function Select({ value, onChange, options, placeholder = "Choose one", disabled
     document.addEventListener("mousedown", f);
     return () => document.removeEventListener("mousedown", f);
   }, []);
-  const current = useMemo(() => options.find((o) => String(o.value) === String(value)), [options, value]);
+
+  const current = useMemo(
+    () => options.find((o) => String(o.value) === String(value)),
+    [options, value]
+  );
 
   return (
     <div ref={ref} className="relative">
@@ -47,7 +57,9 @@ function Select({ value, onChange, options, placeholder = "Choose one", disabled
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className={`w-full h-10 px-3 rounded-xl border bg-white border-slate-300 text-left text-[15px] flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`w-full h-10 px-3 rounded-xl border bg-white border-slate-300 text-left text-[15px] flex items-center justify-between ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
         <span className={current ? "text-slate-900" : "text-slate-400"}>
           {current ? current.label : placeholder}
@@ -88,42 +100,50 @@ function Select({ value, onChange, options, placeholder = "Choose one", disabled
 export default function CategoryForm({ initial, onSaved, onCancel }) {
   const editingId = initial?.id ?? initial?.categoryId;
 
-  // ── Form State ────────────────────────────────────────────────────────────
+  // ── Stores ───────────────────────────────────────────────────────────────
+  const { units = [], fetchUnits, loading: unitsLoading } = useUnitOfMeasureStore();
+
+  // ── Form State ───────────────────────────────────────────────────────────
   const [name, setName] = useState(initial?.name ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
   const [preview, setPreview] = useState(initial?.imageUrl ?? "");
-  const [parentCategoryId, setParentCategoryId] = useState(String(initial?.parentCategoryId ?? "0"));
+  const [parentCategoryId, setParentCategoryId] = useState(
+    initial?.parentCategoryId == null ? "0" : String(initial.parentCategoryId)
+  );
   const [hasVariants, setHasVariants] = useState(!!initial?.hasVariants);
   const [requiresSerialNumbers, setRequiresSerialNumbers] = useState(!!initial?.requiresSerialNumbers);
   const [trackExpiration, setTrackExpiration] = useState(!!initial?.trackExpiration);
   const [defaultUnitOfMeasure, setDefaultUnitOfMeasure] = useState(initial?.defaultUnitOfMeasure ?? "");
   const [taxonomyPath, setTaxonomyPath] = useState(initial?.taxonomyPath ?? "");
   const [hierarchyLevel, setHierarchyLevel] = useState(
-    Number.isFinite(initial?.hierarchyLevel) ? Number(initial?.hierarchyLevel) : 0
+    Number.isFinite(initial?.hierarchyLevel) ? Number(initial?.hierarchyLevel) : 1
   );
 
-  // ── UI State ──────────────────────────────────────────────────────────────
+  // ── UI State ─────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [parentOptions, setParentOptions] = useState([{ value: "0", label: "None (Top-level)" }]);
   const [loadingParents, setLoadingParents] = useState(true);
 
-  // ── Options ───────────────────────────────────────────────────────────────
-  const unitOptions = useMemo(
-    () => [
-      { value: "", label: "None" },
-      { value: "pcs", label: "Piece" },
-      { value: "kg", label: "Kilogram" },
-      { value: "g", label: "Gram" },
-      { value: "ltr", label: "Liter" },
-      { value: "box", label: "Box" },
-    ],
-    []
-  );
+  // ── Load Units of Measure from Store ─────────────────────────────────────
+  useEffect(() => {
+    fetchUnits?.({ pageNumber: 1, pageSize: 100 });
+  }, [fetchUnits]);
 
-  // ── Load Parents ─────────────────────────────────────────────────────────
+  // ── Unit Options from Store ─────────────────────────────────────────────
+  const unitOptions = useMemo(() => {
+    const opts = units
+      .filter((u) => u?.id && u?.name)
+      .map((u) => ({
+        value: u.name, // or u.id if backend expects ID
+        label: `${u.name} (${u.symbol || ""})`.trim(),
+      }));
+    return [{ value: "", label: "None" }, ...opts];
+  }, [units]);
+
+  // ── Load Parent Categories ───────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -160,13 +180,12 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         if (mounted) setLoadingParents(false);
       }
     })();
-
     return () => {
       mounted = false;
     };
   }, []);
 
-  // ── Image Helpers ────────────────────────────────────────────────────────
+  // ── Image Helpers ───────────────────────────────────────────────────────
   const fileToDataUrl = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -215,7 +234,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     setTrackExpiration(false);
     setDefaultUnitOfMeasure("");
     setTaxonomyPath("");
-    setHierarchyLevel(0);
+    setHierarchyLevel(1);
     setError("");
   };
 
@@ -223,7 +242,6 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -234,23 +252,27 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     try {
       const payload = {
         name: name.trim(),
-        code: code.trim() || undefined,
-        description: description.trim() || undefined,
-        imageUrl: imageUrl || undefined,
-        parentCategoryId: parentCategoryId === "0" ? undefined : Number(parentCategoryId),
+        code: code.trim() || null,
+        description: description.trim() || null,
+        imageUrl: imageUrl || null,
+        parentCategoryId: parentCategoryId === "0" ? null : Number(parentCategoryId),
         hasVariants,
         requiresSerialNumbers,
         trackExpiration,
-        defaultUnitOfMeasure: defaultUnitOfMeasure || undefined,
-        taxonomyPath: taxonomyPath.trim() || undefined,
+        defaultUnitOfMeasure: defaultUnitOfMeasure || null,
+        taxonomyPath: taxonomyPath.trim() || null,
         hierarchyLevel,
+        // Optional: include subCategories if needed in future
+        // subCategories: []
       };
 
-      const result = editingId
-        ? await CategoryService.update(editingId, payload)
-        : await CategoryService.create(payload);
+      let result;
+      if (editingId) {
+        result = await CategoryService.update(editingId, payload);
+      } else {
+        result = await CategoryService.create(payload);
+      }
 
-      // ---- NEW: clear form after success ----
       resetForm();
       onSaved?.(result);
     } catch (err) {
@@ -260,6 +282,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         err?.message ||
         "Failed to save category";
       setError(msg);
+      console.error("Category save error:", err);
     } finally {
       setLoading(false);
     }
@@ -305,7 +328,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         )}
       </div>
 
-      {/* Parent & Unit */}
+      {/* Parent & Unit of Measure */}
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">
           <div className="mb-1 text-[13px] font-medium text-slate-700">Parent Category</div>
@@ -313,16 +336,18 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             options={parentOptions}
             value={parentCategoryId}
             onChange={setParentCategoryId}
-            placeholder={loadingParents ? "Loading categories..." : "None"}
+            placeholder={loadingParents ? "Loading..." : "None"}
             disabled={loadingParents}
           />
         </label>
         <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">Unit of Measure</div>
+          <div className="mb-1 text-[13px] font-medium text-slate-700">Default Unit of Measure</div>
           <Select
             options={unitOptions}
             value={defaultUnitOfMeasure}
             onChange={setDefaultUnitOfMeasure}
+            placeholder={unitsLoading ? "Loading units..." : "None"}
+            disabled={unitsLoading}
           />
         </label>
       </div>
@@ -339,7 +364,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             type="number"
             min={0}
             value={hierarchyLevel}
-            onChange={(e) => setHierarchyLevel(Number(e.target.value))}
+            onChange={(e) => setHierarchyLevel(Number(e.target.value) || 0)}
           />
         </label>
       </div>
@@ -393,12 +418,11 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             Cancel
           </button>
         )}
-
         <Link
           to="/inventory/category-rdu"
           className="rounded-xl border border-slate-300 px-5 py-2 text-sm inline-flex items-center"
         >
-          Open category form
+          Open category list
         </Link>
       </div>
     </form>
