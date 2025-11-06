@@ -1,4 +1,3 @@
-// src/components/Inventory/AddProduct.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useProductStore from "../Store/Productstore";
@@ -46,9 +45,9 @@ export default function AddProduct() {
     minimumStockLevel: 0,
     reorderQuantity: 0,
     categoryId: 0,
-    subCategoryId: 0,
-    unitOfMeasureId: 0,
-    primaryVendorId: 0,
+    subCategoryId: null,           // ← null instead of 0
+    unitOfMeasureId: null,         // ← null for "None"
+    primaryVendorId: null,         // ← null for "None"
     status: "Active",
     trackInventory: true,
     isSerialized: false,
@@ -93,9 +92,9 @@ export default function AddProduct() {
           setForm({
             ...p,
             categoryId: p.categoryId || 0,
-            subCategoryId: p.subCategoryId || 0,
-            unitOfMeasureId: p.unitOfMeasureId || 0,
-            primaryVendorId: p.primaryVendorId || 0,
+            subCategoryId: p.subCategoryId ?? null,           // ← preserve null
+            unitOfMeasureId: p.unitOfMeasureId ?? null,       // ← preserve null
+            primaryVendorId: p.primaryVendorId ?? null,       // ← preserve null
             variantGroupId: p.variantGroupId || "",
             variants:
               (p.variants || []).map((v) => ({
@@ -184,12 +183,11 @@ export default function AddProduct() {
   };
 
   // ----------------------------------------------------------------------
-  // Submit – FIXED: 0 → null for optional FKs
+  // Submit – send null for optional FKs
   // ----------------------------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
     setLoading(true);
     setSuccess(false);
     setErrors({});
@@ -211,10 +209,10 @@ export default function AddProduct() {
         hasExpiry: !!form.hasExpiry,
       };
 
-      // FIX: Convert 0 → null for optional foreign keys
-      payload.subCategoryId = form.subCategoryId > 0 ? parseInt(form.subCategoryId, 10) : null;
-      payload.unitOfMeasureId = form.unitOfMeasureId > 0 ? parseInt(form.unitOfMeasureId, 10) : null;
-      payload.primaryVendorId = form.primaryVendorId > 0 ? parseInt(form.primaryVendorId, 10) : null;
+      // Optional FKs → null if not selected
+      payload.subCategoryId = form.subCategoryId ?? null;
+      payload.unitOfMeasureId = form.unitOfMeasureId ?? null;
+      payload.primaryVendorId = form.primaryVendorId ?? null;
 
       // Variants
       const validVariants = form.variants
@@ -241,7 +239,6 @@ export default function AddProduct() {
 
       console.log("FINAL PAYLOAD →", JSON.stringify(payload, null, 2));
 
-      // API Call
       if (isEdit) {
         await updateProduct(parseInt(id), payload);
       } else {
@@ -311,7 +308,6 @@ export default function AddProduct() {
               <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                 <Package className="w-6 h-6 text-slate-700" /> Basic Information
               </h2>
-
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Name */}
                 <div>
@@ -413,9 +409,7 @@ export default function AddProduct() {
                   </label>
                   <select
                     value={form.categoryId}
-                    onChange={(e) =>
-                      handleChange("categoryId", parseInt(e.target.value))
-                    }
+                    onChange={(e) => handleChange("categoryId", parseInt(e.target.value))}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                   >
                     <option value={0}>Select Category</option>
@@ -439,14 +433,15 @@ export default function AddProduct() {
                     Sub Category
                   </label>
                   <select
-                    value={form.subCategoryId}
-                    onChange={(e) =>
-                      handleChange("subCategoryId", parseInt(e.target.value))
-                    }
+                    value={form.subCategoryId ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleChange("subCategoryId", val === "" ? null : Number(val));
+                    }}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                   >
-                    <option value={0}>None</option>
-                    {/* Add subcategories if available */}
+                    <option value="">None</option>
+                    {/* Add subcategories when available */}
                   </select>
                 </div>
 
@@ -456,16 +451,14 @@ export default function AddProduct() {
                     Unit of Measure
                   </label>
                   <select
-                    value={form.unitOfMeasureId}
-                    onChange={(e) =>
-                      handleChange(
-                        "unitOfMeasureId",
-                        parseInt(e.target.value)
-                      )
-                    }
+                    value={form.unitOfMeasureId ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleChange("unitOfMeasureId", val === "" ? null : Number(val));
+                    }}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                   >
-                    <option value={0}>None</option>
+                    <option value="">None</option>
                     {units.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name} ({u.symbol})
@@ -480,16 +473,14 @@ export default function AddProduct() {
                     Primary Vendor
                   </label>
                   <select
-                    value={form.primaryVendorId}
-                    onChange={(e) =>
-                      handleChange(
-                        "primaryVendorId",
-                        parseInt(e.target.value)
-                      )
-                    }
+                    value={form.primaryVendorId ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleChange("primaryVendorId", val === "" ? null : Number(val));
+                    }}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                   >
-                    <option value={0}>None</option>
+                    <option value="">None</option>
                     {vendors.map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.name}
@@ -505,9 +496,7 @@ export default function AddProduct() {
                   </label>
                   <input
                     value={form.variantGroupId}
-                    onChange={(e) =>
-                      handleChange("variantGroupId", e.target.value)
-                    }
+                    onChange={(e) => handleChange("variantGroupId", e.target.value)}
                     placeholder="e.g. MACBOOK-PRO-16"
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                   />
@@ -520,7 +509,6 @@ export default function AddProduct() {
               <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                 <Box className="w-6 h-6 text-slate-700" /> Inventory & Stock
               </h2>
-
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
@@ -529,14 +517,11 @@ export default function AddProduct() {
                   <input
                     type="number"
                     value={form.quantityInStock}
-                    onChange={(e) =>
-                      handleChange("quantityInStock", e.target.value)
-                    }
+                    onChange={(e) => handleChange("quantityInStock", e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                     placeholder="0"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     Min Stock Level
@@ -544,14 +529,11 @@ export default function AddProduct() {
                   <input
                     type="number"
                     value={form.minimumStockLevel}
-                    onChange={(e) =>
-                      handleChange("minimumStockLevel", e.target.value)
-                    }
+                    onChange={(e) => handleChange("minimumStockLevel", e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                     placeholder="0"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     Reorder Quantity
@@ -559,54 +541,39 @@ export default function AddProduct() {
                   <input
                     type="number"
                     value={form.reorderQuantity}
-                    onChange={(e) =>
-                      handleChange("reorderQuantity", e.target.value)
-                    }
+                    onChange={(e) => handleChange("reorderQuantity", e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-500 transition"
                     placeholder="0"
                   />
                 </div>
               </div>
-
               <div className="mt-6 flex gap-6 flex-wrap">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.trackInventory}
-                    onChange={(e) =>
-                      handleChange("trackInventory", e.target.checked)
-                    }
+                    onChange={(e) => handleChange("trackInventory", e.target.checked)}
                     className="w-5 h-5 text-slate-600 rounded focus:ring-slate-500"
                   />
-                  <span className="text-slate-700 font-medium">
-                    Track Inventory
-                  </span>
+                  <span className="text-slate-700 font-medium">Track Inventory</span>
                 </label>
-
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.isSerialized}
-                    onChange={(e) =>
-                      handleChange("isSerialized", e.target.checked)
-                    }
+                    onChange={(e) => handleChange("isSerialized", e.target.checked)}
                     className="w-5 h-5 text-slate-600 rounded focus:ring-slate-500"
                   />
                   <span className="text-slate-700 font-medium">Serialized</span>
                 </label>
-
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.hasExpiry}
-                    onChange={(e) =>
-                      handleChange("hasExpiry", e.target.checked)
-                    }
+                    onChange={(e) => handleChange("hasExpiry", e.target.checked)}
                     className="w-5 h-5 text-slate-600 rounded focus:ring-slate-500"
                   />
-                  <span className="text-slate-700 font-medium">
-                    Has Expiry Date
-                  </span>
+                  <span className="text-slate-700 font-medium">Has Expiry Date</span>
                 </label>
               </div>
             </section>
@@ -639,20 +606,14 @@ export default function AddProduct() {
                   <Plus className="w-4 h-4" /> Add Variant
                 </button>
               </div>
-
               {form.variants.length === 0 ? (
                 <p className="text-slate-500 italic">No variants added</p>
               ) : (
                 <div className="space-y-6">
                   {form.variants.map((variant, i) => (
-                    <div
-                      key={i}
-                      className="p-6 bg-slate-50 rounded-xl border border-slate-200"
-                    >
+                    <div key={i} className="p-6 bg-slate-50 rounded-xl border border-slate-200">
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-semibold text-slate-800">
-                          Variant {i + 1}
-                        </h4>
+                        <h4 className="font-semibold text-slate-800">Variant {i + 1}</h4>
                         <button
                           type="button"
                           onClick={() => removeVariant(i)}
@@ -661,22 +622,17 @@ export default function AddProduct() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-
                       <div className="grid md:grid-cols-2 gap-4">
                         <input
                           placeholder="Variant Name"
                           value={variant.name}
-                          onChange={(e) =>
-                            handleVariantChange(i, "name", e.target.value)
-                          }
+                          onChange={(e) => handleVariantChange(i, "name", e.target.value)}
                           className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                         />
                         <input
                           placeholder="Variant SKU"
                           value={variant.sku}
-                          onChange={(e) =>
-                            handleVariantChange(i, "sku", e.target.value)
-                          }
+                          onChange={(e) => handleVariantChange(i, "sku", e.target.value)}
                           className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                         />
                         <input
@@ -684,39 +640,24 @@ export default function AddProduct() {
                           step="0.01"
                           placeholder="Price"
                           value={variant.price}
-                          onChange={(e) =>
-                            handleVariantChange(i, "price", e.target.value)
-                          }
+                          onChange={(e) => handleVariantChange(i, "price", e.target.value)}
                           className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                         />
                         <input
                           type="number"
                           placeholder="Stock"
                           value={variant.stockQuantity}
-                          onChange={(e) =>
-                            handleVariantChange(
-                              i,
-                              "stockQuantity",
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => handleVariantChange(i, "stockQuantity", e.target.value)}
                           className="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                         />
                       </div>
-
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-1">
                           Attributes JSON *
                         </label>
                         <textarea
                           value={variant.attributesJson}
-                          onChange={(e) =>
-                            handleVariantChange(
-                              i,
-                              "attributesJson",
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => handleVariantChange(i, "attributesJson", e.target.value)}
                           rows={3}
                           className="w-full p-3 font-mono text-sm bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                           placeholder='{"Storage":"512GB","Color":"Space Gray"}'
@@ -745,7 +686,6 @@ export default function AddProduct() {
                   <Plus className="w-4 h-4" /> Add Attribute
                 </button>
               </div>
-
               {form.attributes.length === 0 ? (
                 <p className="text-slate-500 italic">No custom attributes</p>
               ) : (
@@ -755,17 +695,13 @@ export default function AddProduct() {
                       <input
                         placeholder="Key"
                         value={attr.name}
-                        onChange={(e) =>
-                          handleAttributeChange(i, "name", e.target.value)
-                        }
+                        onChange={(e) => handleAttributeChange(i, "name", e.target.value)}
                         className="flex-1 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                       />
                       <input
                         placeholder="Value"
                         value={attr.value}
-                        onChange={(e) =>
-                          handleAttributeChange(i, "value", e.target.value)
-                        }
+                        onChange={(e) => handleAttributeChange(i, "value", e.target.value)}
                         className="flex-1 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500"
                       />
                       <button
@@ -788,7 +724,6 @@ export default function AddProduct() {
                 {errors.submit}
               </div>
             )}
-
             <div className="flex gap-4 pt-8">
               <button
                 type="submit"
@@ -801,7 +736,6 @@ export default function AddProduct() {
                   <>{isEdit ? "Update" : "Create"} Product</>
                 )}
               </button>
-
               <button
                 type="button"
                 onClick={() => navigate(-1)}

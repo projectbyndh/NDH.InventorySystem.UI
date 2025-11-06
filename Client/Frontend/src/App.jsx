@@ -19,6 +19,7 @@ import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
 import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
 import CategoryCRUD from "./Components/Inventory/CategoryCRUD";
 import WareHouse from "./Components/Inventory/WareHouse";
+import ProductCRUD from "./Components/Inventory/ProductCrud";
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
 
           {/* CATEGORY CRUD – FIXED PATH */}
           <Route path="inventory/category-rdu" element={<CategoryCRUD />} />
+          <Route path="inventory/product-crud" element={<ProductCRUD />} />
 
           {/* vendor details*/}
           <Route path="settings" element={<Setting />} />
