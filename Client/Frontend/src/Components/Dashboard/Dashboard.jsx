@@ -60,7 +60,6 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">Inventory Dashboard</h1>
-          <p className="text-slate-600 mt-1">Real-time system overview</p>
         </div>
 
         {error && (
