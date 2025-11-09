@@ -53,13 +53,7 @@ const ProfessionalSidebar = () => {
       path: '/dashboard',
       badge: null
     },
-    {
-      id: 'analytics',
-      title: 'Analytics',
-      icon: BarChart3,
-      path: '/analytics',
-      badge: 'New'
-    },
+
     {
       id: 'inventory',
       title: 'Inventory',
