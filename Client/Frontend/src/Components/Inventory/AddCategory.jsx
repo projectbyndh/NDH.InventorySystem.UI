@@ -1,109 +1,30 @@
 // src/components/Inventory/CategoryForm.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import CategoryService from "../Api/Categoryapi";
-import useUnitOfMeasureStore from "../Store/Unitofmeasurement"; // <-- NEW
+import useUnitOfMeasureStore from "../Store/Unitofmeasurement";
 import { Link } from "react-router-dom";
+import {
+  Package,
+  Hash,
+  FileText,
+  Image as ImageIcon,
+  ChevronDown,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  X,
+  Layers,
+  Settings,
+  Tag,
+} from "lucide-react";
 
 const required = <span className="text-red-500">*</span>;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable Input, Textarea, Select
-// ─────────────────────────────────────────────────────────────────────────────
-function Input(props) {
-  return (
-    <input
-      {...props}
-      className={
-        "w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-[15px] outline-none focus:ring-2 focus:ring-slate-900/5 " +
-        (props.className || "")
-      }
-    />
-  );
-}
-
-function Textarea(props) {
-  return (
-    <textarea
-      {...props}
-      rows={3}
-      className={
-        "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none focus:ring-2 focus:ring-slate-900/5 " +
-        (props.className || "")
-      }
-    />
-  );
-}
-
-function Select({ value, onChange, options, placeholder = "Choose one", disabled }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const f = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", f);
-    return () => document.removeEventListener("mousedown", f);
-  }, []);
-
-  const current = useMemo(
-    () => options.find((o) => String(o.value) === String(value)),
-    [options, value]
-  );
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
-        className={`w-full h-10 px-3 rounded-xl border bg-white border-slate-300 text-left text-[15px] flex items-center justify-between ${
-          disabled ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-      >
-        <span className={current ? "text-slate-900" : "text-slate-400"}>
-          {current ? current.label : placeholder}
-        </span>
-        <svg
-          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.17l3.71-2.94a.75.75 0 1 1 1.04 1.08l-4.24 3.36a.75.75 0 0 1-.94 0L5.21 8.31a.75.75 0 0 1 .02-1.1z" />
-        </svg>
-      </button>
-      {open && !disabled && (
-        <ul className="absolute z-20 mt-2 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
-          {options.map((o) => (
-            <li
-              key={o.value}
-              onClick={() => {
-                onChange(o.value);
-                setOpen(false);
-              }}
-              className={`px-3 py-2 cursor-pointer text-[15px] hover:bg-slate-50 ${
-                String(o.value) === String(value) ? "bg-slate-50" : ""
-              }`}
-            >
-              {o.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN FORM
-// ─────────────────────────────────────────────────────────────────────────────
 export default function CategoryForm({ initial, onSaved, onCancel }) {
   const editingId = initial?.id ?? initial?.categoryId;
 
-  // ── Stores ───────────────────────────────────────────────────────────────
   const { units = [], fetchUnits, loading: unitsLoading } = useUnitOfMeasureStore();
 
-  // ── Form State ───────────────────────────────────────────────────────────
   const [name, setName] = useState(initial?.name ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -121,29 +42,30 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     Number.isFinite(initial?.hierarchyLevel) ? Number(initial?.hierarchyLevel) : 1
   );
 
-  // ── UI State ─────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [parentOptions, setParentOptions] = useState([{ value: "0", label: "None (Top-level)" }]);
   const [loadingParents, setLoadingParents] = useState(true);
+  const fileInputRef = useRef(null);
 
-  // ── Load Units of Measure from Store ─────────────────────────────────────
+  // Load Units
   useEffect(() => {
     fetchUnits?.({ pageNumber: 1, pageSize: 100 });
   }, [fetchUnits]);
 
-  // ── Unit Options from Store ─────────────────────────────────────────────
+  // Unit Options
   const unitOptions = useMemo(() => {
     const opts = units
       .filter((u) => u?.id && u?.name)
       .map((u) => ({
-        value: u.name, // or u.id if backend expects ID
+        value: u.name,
         label: `${u.name} (${u.symbol || ""})`.trim(),
       }));
     return [{ value: "", label: "None" }, ...opts];
   }, [units]);
 
-  // ── Load Parent Categories ───────────────────────────────────────────────
+  // Load Parent Categories
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -151,7 +73,6 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
       try {
         const data = await CategoryService.getAll({ pageNumber: 1, pageSize: 100 });
         if (!mounted) return;
-
         const list = Array.isArray(data?.items)
           ? data.items
           : Array.isArray(data?.data)
@@ -159,14 +80,12 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
           : Array.isArray(data)
           ? data
           : [];
-
         const options = list
           .filter((c) => c && (c.id || c.categoryId))
           .map((c) => ({
             value: String(c.id ?? c.categoryId),
             label: c.name || `Category ${c.id ?? c.categoryId}`,
           }));
-
         setParentOptions([
           { value: "0", label: "None (Top-level)" },
           ...options,
@@ -185,7 +104,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     };
   }, []);
 
-  // ── Image Helpers ───────────────────────────────────────────────────────
+  // Image Handlers
   const fileToDataUrl = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -210,44 +129,33 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     }
   };
 
+  const removeImage = () => {
+    setImageUrl("");
+    setPreview("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const onTypeImageUrl = (url) => {
     setImageUrl(url);
     setPreview(url || "");
   };
 
-  // ── Validation ───────────────────────────────────────────────────────────
+  // Validation
   const validate = () => {
     if (!name.trim()) return "Category name is required";
     return null;
   };
 
-  // ── Reset Form ───────────────────────────────────────────────────────────
-  const resetForm = () => {
-    setName("");
-    setCode("");
-    setDescription("");
-    setImageUrl("");
-    setPreview("");
-    setParentCategoryId("0");
-    setHasVariants(false);
-    setRequiresSerialNumbers(false);
-    setTrackExpiration(false);
-    setDefaultUnitOfMeasure("");
-    setTaxonomyPath("");
-    setHierarchyLevel(1);
-    setError("");
-  };
-
-  // ── Submit ───────────────────────────────────────────────────────────────
+  // Submit
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
     const validationError = validate();
     if (validationError) {
       setError(validationError);
       return;
     }
-
     setLoading(true);
     try {
       const payload = {
@@ -262,8 +170,6 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         defaultUnitOfMeasure: defaultUnitOfMeasure || null,
         taxonomyPath: taxonomyPath.trim() || null,
         hierarchyLevel,
-        // Optional: include subCategories if needed in future
-        // subCategories: []
       };
 
       let result;
@@ -273,8 +179,9 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         result = await CategoryService.create(payload);
       }
 
-      resetForm();
+      setSuccess(true);
       onSaved?.(result);
+      setTimeout(() => setSuccess(false), 2000);
     } catch (err) {
       const msg =
         err?.response?.data?._message ||
@@ -282,149 +189,289 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         err?.message ||
         "Failed to save category";
       setError(msg);
-      console.error("Category save error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      {/* Name & Code */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">
-            Category Name {required}
+    <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
+      <form onSubmit={onSubmit} className="space-y-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-sky-50 rounded-xl">
+              <Package className="w-6 h-6 text-sky-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {editingId ? "Edit Category" : "Add New Category"}
+              </h1>
+              <p className="text-slate-600 text-sm">Fill in the details below</p>
+            </div>
           </div>
-          <Input value={name} onChange={(e) => setName(e.target.value)} required />
-        </label>
-        <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">Code</div>
-          <Input value={code} onChange={(e) => setCode(e.target.value)} />
-        </label>
-      </div>
-
-      {/* Description */}
-      <label className="block">
-        <div className="mb-1 text-[13px] font-medium text-slate-700">Description</div>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
-      </label>
-
-      {/* Image */}
-      <div className="space-y-3">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <label className="block">
-            <div className="mb-1 text-[13px] font-medium text-slate-700">Upload Image</div>
-            <input type="file" accept="image/*" onChange={onPickImage} className="block w-full text-sm" />
-          </label>
-          <label className="block">
-            <div className="mb-1 text-[13px] font-medium text-slate-700">or Image URL</div>
-            <Input value={imageUrl} onChange={(e) => onTypeImageUrl(e.target.value)} />
-          </label>
-        </div>
-        {preview && (
-          <img src={preview} alt="Preview" className="h-24 w-24 rounded-lg border object-cover" />
-        )}
-      </div>
-
-      {/* Parent & Unit of Measure */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">Parent Category</div>
-          <Select
-            options={parentOptions}
-            value={parentCategoryId}
-            onChange={setParentCategoryId}
-            placeholder={loadingParents ? "Loading..." : "None"}
-            disabled={loadingParents}
-          />
-        </label>
-        <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">Default Unit of Measure</div>
-          <Select
-            options={unitOptions}
-            value={defaultUnitOfMeasure}
-            onChange={setDefaultUnitOfMeasure}
-            placeholder={unitsLoading ? "Loading units..." : "None"}
-            disabled={unitsLoading}
-          />
-        </label>
-      </div>
-
-      {/* Taxonomy & Level */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">Taxonomy Path</div>
-          <Input value={taxonomyPath} onChange={(e) => setTaxonomyPath(e.target.value)} />
-        </label>
-        <label className="block">
-          <div className="mb-1 text-[13px] font-medium text-slate-700">Hierarchy Level</div>
-          <Input
-            type="number"
-            min={0}
-            value={hierarchyLevel}
-            onChange={(e) => setHierarchyLevel(Number(e.target.value) || 0)}
-          />
-        </label>
-      </div>
-
-      {/* Checkboxes */}
-      <div className="flex flex-wrap gap-6">
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={hasVariants} onChange={() => setHasVariants((v) => !v)} />
-          Has Variants
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={requiresSerialNumbers}
-            onChange={() => setRequiresSerialNumbers((v) => !v)}
-          />
-          Requires Serial Numbers
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={trackExpiration}
-            onChange={() => setTrackExpiration((v) => !v)}
-          />
-          Track Expiration
-        </label>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          {loading ? "Saving..." : editingId ? "Update" : "Create"}
-        </button>
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-xl border border-slate-300 px-5 py-2 text-sm"
+          <Link
+            to="/inventory/category-rdu"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
           >
-            Cancel
-          </button>
+            <Tag className="w-4 h-4" />
+            View All Categories
+          </Link>
+        </div>
+
+        {success && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800 animate-fadeIn">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Category saved successfully!</span>
+          </div>
         )}
-        <Link
-          to="/inventory/category-rdu"
-          className="rounded-xl border border-slate-300 px-5 py-2 text-sm inline-flex items-center"
-        >
-          Open category list
-        </Link>
-      </div>
-    </form>
+
+        {/* Basic Info */}
+        <section>
+          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <Tag className="w-5 h-5 text-slate-600" />
+            Basic Information
+          </h2>
+          <div className="grid md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
+                Category Name {required}
+              </label>
+              <div className="relative">
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 transition-shadow"
+                  placeholder="e.g. Electronics"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Code</label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 transition-shadow"
+                  placeholder="e.g. ELEC-001"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Description */}
+        <section className="border-t pt-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-slate-600" />
+            Description
+          </h2>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 transition-shadow"
+            placeholder="Optional description..."
+          />
+        </section>
+
+        {/* Image */}
+        <section className="border-t pt-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-slate-600" />
+            Category Image
+          </h2>
+          <div className="flex items-start gap-6">
+            <div className="shrink-0">
+              {preview ? (
+                <div className="relative group">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="h-24 w-24 rounded-xl object-cover border-2 border-slate-200 shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-24 w-24 rounded-xl bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
+                  <ImageIcon className="w-10 h-10 text-slate-400" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onPickImage}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                />
+                <p className="mt-1 text-xs text-slate-500">Max 2MB, JPG/PNG</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-600">or</span>
+                <input
+                  value={imageUrl}
+                  onChange={(e) => onTypeImageUrl(e.target.value)}
+                  placeholder="Paste image URL..."
+                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Hierarchy & Unit */}
+        <section className="border-t pt-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <Layers className="w-5 h-5 text-slate-600" />
+            Hierarchy & Unit
+          </h2>
+          <div className="grid md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Parent Category</label>
+              {loadingParents ? (
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </div>
+              ) : (
+                <select
+                  value={parentCategoryId}
+                  onChange={(e) => setParentCategoryId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
+                >
+                  {parentOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Default Unit of Measure</label>
+              {unitsLoading ? (
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading units...
+                </div>
+              ) : (
+                <select
+                  value={defaultUnitOfMeasure}
+                  onChange={(e) => setDefaultUnitOfMeasure(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
+                >
+                  {unitOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Taxonomy Path</label>
+              <input
+                value={taxonomyPath}
+                onChange={(e) => setTaxonomyPath(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
+                placeholder="e.g. root/electronics/phones"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Hierarchy Level</label>
+              <input
+                type="number"
+                min="0"
+                value={hierarchyLevel}
+                onChange={(e) => setHierarchyLevel(Number(e.target.value) || 0)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Settings */}
+        <section className="border-t pt-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-slate-600" />
+            Inventory Settings
+          </h2>
+          <div className="flex flex-wrap gap-6">
+            {[
+              { key: "hasVariants", label: "Has Variants" },
+              { key: "requiresSerialNumbers", label: "Requires Serial Numbers" },
+              { key: "trackExpiration", label: "Track Expiration" },
+            ].map((item) => (
+              <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={
+                    item.key === "hasVariants"
+                      ? hasVariants
+                      : item.key === "requiresSerialNumbers"
+                      ? requiresSerialNumbers
+                      : trackExpiration
+                  }
+                  onChange={() => {
+                    if (item.key === "hasVariants") setHasVariants((v) => !v);
+                    else if (item.key === "requiresSerialNumbers") setRequiresSerialNumbers((v) => !v);
+                    else setTrackExpiration((v) => !v);
+                  }}
+                  className="w-5 h-5 text-sky-600 rounded focus:ring-sky-500"
+                />
+                <span className="text-slate-700 font-medium">{item.label}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        {/* Error */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700 animate-shake">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-6 border-t">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                {editingId ? "Update Category" : "Create Category"}
+              </>
+            )}
+          </button>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-3.5 border-2 border-slate-300 text-slate-700 rounded-xl font-bold text-base hover:bg-slate-50 transition-all"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

@@ -9,19 +9,24 @@ const unwrap = (res) => {
   return body;
 };
 
+const clean = (obj) => {
+  Object.keys(obj).forEach((k) => obj[k] == null && delete obj[k]);
+  return obj;
+};
+
 const ProductService = {
-  // GET /Product/getAll?PageNumber=1&PageSize=10
-  getAll: async ({ pageNumber = 1, pageSize = 20 }) => {
-    const res = await axiosInstance.get("/Product/getAll", {
+  // GET /api/Product/get-all
+  getAll: async ({ pageNumber = 1, pageSize = 20 } = {}) => {
+    const res = await axiosInstance.get("/Product/get-all", {
       params: { PageNumber: pageNumber, PageSize: pageSize },
     });
     return unwrap(res);
   },
 
-  getById: (id) => axiosInstance.get(`/Product/getById/${id}`).then(unwrap),
+  getById: (id) => axiosInstance.get(`/Product/get-by-id/${id}`).then(unwrap),
 
   create: (payload) => {
-    const body = {
+    const body = clean({
       name: payload.name?.trim(),
       description: payload.description?.trim() || null,
       sku: payload.sku?.trim(),
@@ -40,7 +45,7 @@ const ProductService = {
       hasExpiry: !!payload.hasExpiry,
       variantGroupId: payload.variantGroupId?.trim() || null,
       variants: (payload.variants ?? [])
-        .map((v) => ({
+        .map((v) => clean({
           name: v.name?.trim() || null,
           sku: v.sku?.trim() || null,
           price: Number(v.price) || 0,
@@ -49,22 +54,18 @@ const ProductService = {
         }))
         .filter((v) => v.name || v.sku),
       attributes: (payload.attributes ?? [])
-        .map((a) => ({
+        .map((a) => clean({
           name: a.name?.trim() || null,
           value: a.value?.trim() || null,
         }))
         .filter((a) => a.name && a.value),
-    };
+    });
 
-    // Remove null/undefined keys
-    Object.keys(body).forEach((k) => body[k] == null && delete body[k]);
-
-    console.log("CREATE →", JSON.stringify(body, null, 2));
     return axiosInstance.post("/Product/create", body).then(unwrap);
   },
 
   update: (id, payload) => {
-    const body = {
+    const body = clean({
       name: payload.name?.trim(),
       description: payload.description?.trim() || null,
       sku: payload.sku?.trim(),
@@ -83,7 +84,7 @@ const ProductService = {
       hasExpiry: !!payload.hasExpiry,
       variantGroupId: payload.variantGroupId?.trim() || null,
       variants: (payload.variants ?? [])
-        .map((v) => ({
+        .map((v) => clean({
           id: Number(v.id) || 0,
           name: v.name?.trim() || null,
           sku: v.sku?.trim() || null,
@@ -93,15 +94,13 @@ const ProductService = {
         }))
         .filter((v) => v.name || v.sku),
       attributes: (payload.attributes ?? [])
-        .map((a) => ({
+        .map((a) => clean({
           id: Number(a.id) || 0,
           name: a.name?.trim() || null,
           value: a.value?.trim() || null,
         }))
         .filter((a) => a.name && a.value),
-    };
-
-    Object.keys(body).forEach((k) => body[k] == null && delete body[k]);
+    });
 
     return axiosInstance.put(`/Product/update/${id}`, body).then(unwrap);
   },
