@@ -1,4 +1,3 @@
-// src/components/Management/WarehouseManager.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useWarehouseStore from "../Store/Warehousestore";
