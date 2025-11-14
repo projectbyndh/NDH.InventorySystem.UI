@@ -1,22 +1,35 @@
 // src/components/Management/WarehouseManager.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useWarehouse } from "../Hooks/Warehousehooks"; // Adjust path if needed
+import { useWarehouse } from "../Hooks/Warehousehooks";
 import useLoginStore from "../Store/Loginstore";
-import {
-  Plus, Edit2, Trash2, Loader2, Search, ChevronLeft, ChevronRight,
-  AlertCircle, CheckCircle, Building2, Phone, MapPin, Home, Globe, Hash, Settings
-} from "lucide-react";
+import DropdownService from "../Api/Dropdown";
 import React from "react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Loader2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle,
+  Building2,
+  Phone,
+  MapPin,
+  Home,
+  Globe,
+  Hash,
+  Settings,
+} from "lucide-react";
+
 export default function WarehouseManager() {
   const navigate = useNavigate();
   const { token } = useLoginStore();
-
   const {
     warehouses,
-    total,
     loading: hookLoading,
-    error: hookError,
     page,
     setPage,
     fetchWarehouses,
@@ -27,25 +40,115 @@ export default function WarehouseManager() {
   } = useWarehouse({ pageSize: 10 });
 
   // UI State
-  const [mode, setMode] = useState("list"); // "list" | "form"
+  const [mode, setMode] = useState("list");
   const [editingId, setEditingId] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: "" });
-
   const nameInputRef = useRef(null);
+
+  // DROPDOWN STATE
+  const [districts, setDistricts] = useState([]);
+  const [municipalities, setMunicipalities] = useState([]);
+  const [stateProvinces, setStateProvinces] = useState([]);
+  const [dropdownLoading, setDropdownLoading] = useState(false);
+  const [dropdownError, setDropdownError] = useState(null);
 
   // Auth Guard
   useEffect(() => {
     if (!token) navigate("/login", { replace: true });
   }, [token, navigate]);
 
-  // Auto-fetch on mount
+  // Auto-fetch warehouses
   useEffect(() => {
     if (token) fetchWarehouses();
   }, [token, fetchWarehouses]);
+
+  // NORMALIZE API RESPONSE
+  const normalizeOptions = (res) => {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.items)) return res.items;
+    if (Array.isArray(res?.results)) return res.results;
+    return [];
+  };
+
+  // DROPDOWN MAPPERS
+  const mapOptionLabel = (opt) => {
+    if (!opt) return "Unnamed";
+    const candidates = [
+      opt.name,
+      opt.provinceName,       // For StateProvince
+      opt.districtName,
+      opt.municipalityName,
+      opt.stateName,
+      opt.label,
+      opt.text,
+      opt.title,
+      opt.description,
+      opt.en,
+      opt.ne,
+      opt.np,
+    ];
+    const raw = candidates.find((c) => c != null);
+    return raw ? String(raw) : "Unnamed";
+  };
+
+  const mapOptionValue = (opt) => {
+    if (!opt) return "";
+    return (
+      opt.id ??
+      opt.value ??
+      opt.code ??
+      opt.districtCode ??
+      opt.municipalityCode ??
+      opt.stateCode ??
+      String(opt.name ?? "")
+    );
+  };
+
+  // Load Dropdowns
+  useEffect(() => {
+    if (!token) return;
+
+    const loadDropdowns = async () => {
+      setDropdownLoading(true);
+      setDropdownError(null);
+      try {
+        const [dRes, mRes, sRes] = await Promise.all([
+          DropdownService.getDistricts(),
+          DropdownService.getMunicipalities(),
+          DropdownService.getStateProvinces(),
+        ]);
+
+        const districts = normalizeOptions(dRes);
+        const municipalities = normalizeOptions(mRes);
+        const stateProvinces = normalizeOptions(sRes);
+
+        setDistricts(districts);
+        setMunicipalities(municipalities);
+        setStateProvinces(stateProvinces);
+
+        // Optional: Debug (remove later)
+        // console.log("Districts:", districts);
+        // console.log("Municipalities:", municipalities);
+        // console.log("State/Provinces:", stateProvinces);
+      } catch (err) {
+        const msg =
+          err?.response?.data?._message ||
+          err?.message ||
+          "Failed to load location dropdowns";
+        setDropdownError(msg);
+        console.error("Dropdown load error:", err);
+      } finally {
+        setDropdownLoading(false);
+      }
+    };
+
+    loadDropdowns();
+  }, [token]);
 
   // Focus on form
   useEffect(() => {
@@ -55,21 +158,37 @@ export default function WarehouseManager() {
   }, [mode]);
 
   // Filter & Pagination
-  const filtered = warehouses.filter(w =>
-    w.name?.toLowerCase().includes(search.toLowerCase()) ||
-    w.contactPerson?.toLowerCase().includes(search.toLowerCase())
+  const filtered = warehouses.filter(
+    (w) =>
+      w.name?.toLowerCase().includes(search.toLowerCase()) ||
+      w.contactPerson?.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPages = Math.ceil(filtered.length / 10);
+  const totalPages = Math.ceil(filtered.length / 10) || 1;
   const paginated = filtered.slice((page - 1) * 10, page * 10);
 
   // Form State
   const initialForm = {
-    name: "", contactPerson: "", contactNumber: "",
+    name: "",
+    contactPerson: "",
+    contactNumber: "",
     location: {
-      country: "", stateProvince: "", district: "", municipality: "", municipalityType: "",
-      wardNo: "", addressLine1: "", addressLine2: "", postalCode: "", latitude: "", longitude: ""
+      country: "",
+      stateProvince: "",
+      district:"",
+      municipality: "",
+      municipalityType: "",
+      wardNo: "",
+      addressLine1: "",
+      addressLine2: "",
+      postalCode: "",
+      latitude: "",
+      longitude: "",
     },
-    customAttributes: { additionalProp1: "", additionalProp2: "", additionalProp3: "" }
+    customAttributes: {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
   };
   const [form, setForm] = useState(initialForm);
 
@@ -81,7 +200,8 @@ export default function WarehouseManager() {
     if (!form.name.trim()) e.name = "Warehouse name is required";
     if (!form.contactPerson.trim()) e.contactPerson = "Contact person is required";
     if (!form.contactNumber.trim()) e.contactNumber = "Phone number is required";
-    else if (!/^\+?\d{7,15}$/.test(form.contactNumber)) e.contactNumber = "Invalid phone number";
+    else if (!/^\+?\d{7,15}$/.test(form.contactNumber))
+      e.contactNumber = "Invalid phone number";
 
     if (!loc.country.trim()) e["location.country"] = "Country is required";
     if (!loc.addressLine1.trim()) e["location.addressLine1"] = "Address Line 1 is required";
@@ -92,23 +212,23 @@ export default function WarehouseManager() {
   };
 
   const handleChange = (field, value) => {
-    setForm(p => ({ ...p, [field]: value }));
-    if (errors[field]) setErrors(p => ({ ...p, [field]: "" }));
+    setForm((p) => ({ ...p, [field]: value }));
+    if (errors[field]) setErrors((p) => ({ ...p, [field]: "" }));
   };
 
   const handleLocation = (field, value) => {
-    setForm(p => ({
+    setForm((p) => ({
       ...p,
-      location: { ...p.location, [field]: value }
+      location: { ...p.location, [field]: value },
     }));
     const key = `location.${field}`;
-    if (errors[key]) setErrors(p => ({ ...p, [key]: "" }));
+    if (errors[key]) setErrors((p) => ({ ...p, [key]: "" }));
   };
 
   const handleCustom = (field, value) => {
-    setForm(p => ({
+    setForm((p) => ({
       ...p,
-      customAttributes: { ...p.customAttributes, [field]: value }
+      customAttributes: { ...p.customAttributes, [field]: value },
     }));
   };
 
@@ -139,13 +259,13 @@ export default function WarehouseManager() {
         addressLine2: w.location?.addressLine2 || "",
         postalCode: w.location?.postalCode || "",
         latitude: w.location?.latitude || "",
-        longitude: w.location?.longitude || ""
+        longitude: w.location?.longitude || "",
       },
       customAttributes: {
         additionalProp1: w.customAttributes?.additionalProp1 || "",
         additionalProp2: w.customAttributes?.additionalProp2 || "",
-        additionalProp3: w.customAttributes?.additionalProp3 || ""
-      }
+        additionalProp3: w.customAttributes?.additionalProp3 || "",
+      },
     });
     setErrors({});
     setSuccess(false);
@@ -188,7 +308,7 @@ export default function WarehouseManager() {
           additionalProp1: form.customAttributes.additionalProp1.trim() || undefined,
           additionalProp2: form.customAttributes.additionalProp2.trim() || undefined,
           additionalProp3: form.customAttributes.additionalProp3.trim() || undefined,
-        }
+        },
       };
 
       if (editingId) {
@@ -212,6 +332,7 @@ export default function WarehouseManager() {
 
   const openDelete = (id, name) => setDeleteModal({ open: true, id, name });
   const closeDelete = () => setDeleteModal({ open: false, id: null, name: "" });
+
   const confirmDelete = async () => {
     if (!deleteModal.id) return;
     setFormLoading(true);
@@ -271,14 +392,19 @@ export default function WarehouseManager() {
                         ref={nameInputRef}
                         type="text"
                         value={form.name}
-                        onChange={e => handleChange("name", e.target.value)}
+                        onChange={(e) => handleChange("name", e.target.value)}
                         placeholder="Central Storage A"
                         className={`w-full pl-10 pr-4 py-3 rounded-xl border text-base transition-all
                           focus:outline-none focus:ring-2 focus:ring-slate-500
                           ${errors.name ? "border-red-500" : "border-slate-300"}`}
                       />
                     </div>
-                    {errors.name && <p className="mt-1 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.name}</p>}
+                    {errors.name && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -288,13 +414,18 @@ export default function WarehouseManager() {
                     <input
                       type="text"
                       value={form.contactPerson}
-                      onChange={e => handleChange("contactPerson", e.target.value)}
+                      onChange={(e) => handleChange("contactPerson", e.target.value)}
                       placeholder="Raj Kumar"
                       className={`w-full px-4 py-3 rounded-xl border text-base transition-all
                         focus:outline-none focus:ring-2 focus:ring-slate-500
                         ${errors.contactPerson ? "border-red-500" : "border-slate-300"}`}
                     />
-                    {errors.contactPerson && <p className="mt-1 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.contactPerson}</p>}
+                    {errors.contactPerson && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.contactPerson}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -306,14 +437,19 @@ export default function WarehouseManager() {
                       <input
                         type="text"
                         value={form.contactNumber}
-                        onChange={e => handleChange("contactNumber", e.target.value)}
+                        onChange={(e) => handleChange("contactNumber", e.target.value)}
                         placeholder="+977 9800000000"
                         className={`w-full pl-10 pr-4 py-3 rounded-xl border text-base transition-all
                           focus:outline-none focus:ring-2 focus:ring-slate-500
                           ${errors.contactNumber ? "border-red-500" : "border-slate-300"}`}
                       />
                     </div>
-                    {errors.contactNumber && <p className="mt-1 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.contactNumber}</p>}
+                    {errors.contactNumber && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.contactNumber}
+                      </p>
+                    )}
                   </div>
                 </div>
               </section>
@@ -324,7 +460,16 @@ export default function WarehouseManager() {
                   <MapPin className="w-6 h-6 text-slate-700" />
                   Location Details
                 </h2>
+
+                {dropdownError && (
+                  <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-700 text-sm flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {dropdownError}
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-6">
+                  {/* Country */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Country <span className="text-red-500">*</span>
@@ -334,62 +479,113 @@ export default function WarehouseManager() {
                       <input
                         type="text"
                         value={form.location.country}
-                        onChange={e => handleLocation("country", e.target.value)}
+                        onChange={(e) => handleLocation("country", e.target.value)}
                         placeholder="Nepal"
                         className={`w-full pl-10 pr-4 py-3 rounded-xl border
                           ${errors["location.country"] ? "border-red-500" : "border-slate-300"}`}
                       />
                     </div>
-                    {errors["location.country"] && <p className="mt-1 text-sm text-red-600">{errors["location.country"]}</p>}
+                    {errors["location.country"] && (
+                      <p className="mt-1 text-sm text-red-600">{errors["location.country"]}</p>
+                    )}
                   </div>
 
+                  {/* State / Province */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">State/Province</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      State / Province
+                    </label>
+                    <select
                       value={form.location.stateProvince}
-                      onChange={e => handleLocation("stateProvince", e.target.value)}
-                      placeholder="Bagmati"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300"
-                    />
+                      onChange={(e) => handleLocation("stateProvince", e.target.value)}
+                      disabled={dropdownLoading}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white"
+                    >
+                      <option value="">
+                        {dropdownLoading ? "Loading..." : "Select state / province"}
+                      </option>
+                      {stateProvinces.map((sp) => {
+                        const value = mapOptionValue(sp);
+                        const label = mapOptionLabel(sp);
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
 
+                  {/* District */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">District</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      District
+                    </label>
+                    <select
                       value={form.location.district}
-                      onChange={e => handleLocation("district", e.target.value)}
-                      placeholder="Kathmandu"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300"
-                    />
+                      onChange={(e) => handleLocation("district", e.target.value)}
+                      disabled={dropdownLoading}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white"
+                    >
+                      <option value="">
+                        {dropdownLoading ? "Loading..." : "Select district"}
+                      </option>
+                      {districts.map((d) => {
+                        const value = mapOptionValue(d);
+                        const label = mapOptionLabel(d);
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
 
+                  {/* Municipality */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Municipality</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Municipality
+                    </label>
+                    <select
                       value={form.location.municipality}
-                      onChange={e => handleLocation("municipality", e.target.value)}
-                      placeholder="Kathmandu Metropolitan"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300"
-                    />
+                      onChange={(e) => handleLocation("municipality", e.target.value)}
+                      disabled={dropdownLoading}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white"
+                    >
+                      <option value="">
+                        {dropdownLoading ? "Loading..." : "Select municipality"}
+                      </option>
+  {municipalities.map((m) => {
+    const value = mapOptionValue(m);
+    const label = mapOptionLabel(m);
+    return (
+      <option key={value} value={value}>
+        {label}
+      </option>
+    );
+  })}
+</select>
                   </div>
 
+                  {/* Ward No */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Ward No</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Ward No
+                    </label>
                     <div className="relative">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input
                         type="number"
                         value={form.location.wardNo}
-                        onChange={e => handleLocation("wardNo", e.target.value)}
+                        onChange={(e) => handleLocation("wardNo", e.target.value)}
                         placeholder="10"
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300"
                       />
                     </div>
                   </div>
 
+                  {/* Postal Code */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Postal Code <span className="text-red-500">*</span>
@@ -399,15 +595,18 @@ export default function WarehouseManager() {
                       <input
                         type="text"
                         value={form.location.postalCode}
-                        onChange={e => handleLocation("postalCode", e.target.value)}
+                        onChange={(e) => handleLocation("postalCode", e.target.value)}
                         placeholder="44600"
                         className={`w-full pl-10 pr-4 py-3 rounded-xl border
                           ${errors["location.postalCode"] ? "border-red-500" : "border-slate-300"}`}
                       />
                     </div>
-                    {errors["location.postalCode"] && <p className="mt-1 text-sm text-red-600">{errors["location.postalCode"]}</p>}
+                    {errors["location.postalCode"] && (
+                      <p className="mt-1 text-sm text-red-600">{errors["location.postalCode"]}</p>
+                    )}
                   </div>
 
+                  {/* Address 1 */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Address Line 1 <span className="text-red-500">*</span>
@@ -415,20 +614,25 @@ export default function WarehouseManager() {
                     <input
                       type="text"
                       value={form.location.addressLine1}
-                      onChange={e => handleLocation("addressLine1", e.target.value)}
+                      onChange={(e) => handleLocation("addressLine1", e.target.value)}
                       placeholder="123 Industrial Road"
                       className={`w-full px-4 py-3 rounded-xl border
                         ${errors["location.addressLine1"] ? "border-red-500" : "border-slate-300"}`}
                     />
-                    {errors["location.addressLine1"] && <p className="mt-1 text-sm text-red-600">{errors["location.addressLine1"]}</p>}
+                    {errors["location.addressLine1"] && (
+                      <p className="mt-1 text-sm text-red-600">{errors["location.addressLine1"]}</p>
+                    )}
                   </div>
 
+                  {/* Address 2 */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Address Line 2</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Address Line 2
+                    </label>
                     <input
                       type="text"
                       value={form.location.addressLine2}
-                      onChange={e => handleLocation("addressLine2", e.target.value)}
+                      onChange={(e) => handleLocation("addressLine2", e.target.value)}
                       placeholder="Warehouse Block B"
                       className="w-full px-4 py-3 rounded-xl border border-slate-300"
                     />
@@ -444,31 +648,37 @@ export default function WarehouseManager() {
                 </h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Additional Prop 1</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Additional Prop 1
+                    </label>
                     <input
                       type="text"
                       value={form.customAttributes.additionalProp1}
-                      onChange={e => handleCustom("additionalProp1", e.target.value)}
+                      onChange={(e) => handleCustom("additionalProp1", e.target.value)}
                       placeholder="e.g. Cold Storage"
                       className="w-full px-4 py-3 rounded-xl border border-slate-300"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Additional Prop 2</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Additional Prop 2
+                    </label>
                     <input
                       type="text"
                       value={form.customAttributes.additionalProp2}
-                      onChange={e => handleCustom("additionalProp2", e.target.value)}
+                      onChange={(e) => handleCustom("additionalProp2", e.target.value)}
                       placeholder="e.g. 24/7 Access"
                       className="w-full px-4 py-3 rounded-xl border border-slate-300"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Additional Prop 3</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Additional Prop 3
+                    </label>
                     <input
                       type="text"
                       value={form.customAttributes.additionalProp3}
-                      onChange={e => handleCustom("additionalProp3", e.target.value)}
+                      onChange={(e) => handleCustom("additionalProp3", e.target.value)}
                       placeholder="e.g. CCTV"
                       className="w-full px-4 py-3 rounded-xl border border-slate-300"
                     />
@@ -527,7 +737,7 @@ export default function WarehouseManager() {
           </div>
           <button
             onClick={startCreate}
-            className="bg-slate-900 text-white px-6 py-3.5 rounded-xl font-bold
+            className="bg-slate-900 text-white px-6 py-3.5 roundedXl font-bold
                        hover:bg-black transition-all flex items-center gap-2 shadow-lg"
           >
             <Plus className="w-6 h-6" />
@@ -542,7 +752,10 @@ export default function WarehouseManager() {
             <input
               type="text"
               value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search by name or contact..."
               className="w-full pl-12 pr-6 py-4 rounded-xl border border-slate-300 text-base
                          focus:outline-none focus:ring-2 focus:ring-slate-500"
@@ -562,7 +775,10 @@ export default function WarehouseManager() {
                 <Building2 className="w-12 h-12 text-slate-400" />
               </div>
               <p className="text-slate-500 text-lg">No warehouses found.</p>
-              <button onClick={startCreate} className="mt-4 text-slate-900 font-semibold hover:underline">
+              <button
+                onClick={startCreate}
+                className="mt-4 text-slate-900 font-semibold hover:underline"
+              >
                 Add your first warehouse
               </button>
             </div>
@@ -578,8 +794,11 @@ export default function WarehouseManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map(w => (
-                    <tr key={w.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  {paginated.map((w) => (
+                    <tr
+                      key={w.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    >
                       <td className="px-6 py-5 font-semibold text-slate-900">{w.name}</td>
                       <td className="px-6 py-5 text-slate-600">{w.contactPerson}</td>
                       <td className="px-6 py-5 text-slate-600">
@@ -621,7 +840,7 @@ export default function WarehouseManager() {
         {totalPages > 1 && (
           <div className="mt-8 flex justify-center items-center gap-3">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className="p-3 rounded-xl bg-white shadow hover:shadow-md disabled:opacity-50 transition-all"
             >
@@ -631,7 +850,7 @@ export default function WarehouseManager() {
               Page <strong>{page}</strong> of <strong>{totalPages}</strong>
             </span>
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="p-3 rounded-xl bg-white shadow hover:shadow-md disabled:opacity-50 transition-all"
             >
