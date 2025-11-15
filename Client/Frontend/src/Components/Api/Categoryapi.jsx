@@ -29,12 +29,15 @@ const CategoryService = {
   // 🟢 FIX HERE — remove `{ dto }` wrapper
 // src/Components/Api/Categoryapi.jsx
 create: (payload) => {
-  const body = {
+    const body = {
     name: payload.name?.trim(),
     code: payload.code?.trim() || undefined,
     description: payload.description?.trim() || undefined,
     imageUrl: payload.imageUrl || undefined,
-    parentCategoryId: payload.parentCategoryId === "0" ? undefined : Number(payload.parentCategoryId),
+    parentCategoryId:
+      payload.parentCategoryId == null || payload.parentCategoryId === "0"
+        ? undefined
+        : Number(payload.parentCategoryId),
     hasVariants: !!payload.hasVariants,
     requiresSerialNumbers: !!payload.requiresSerialNumbers,
     trackExpiration: !!payload.trackExpiration,
@@ -54,12 +57,15 @@ create: (payload) => {
 },
 
 update: (id, payload) => {
-  const body = {
+    const body = {
     name: payload.name?.trim(),
     code: payload.code?.trim() || undefined,
     description: payload.description?.trim() || undefined,
     imageUrl: payload.imageUrl || undefined,
-    parentCategoryId: payload.parentCategoryId === "0" ? undefined : Number(payload.parentCategoryId),
+    parentCategoryId:
+      payload.parentCategoryId == null || payload.parentCategoryId === "0"
+        ? undefined
+        : Number(payload.parentCategoryId),
     hasVariants: !!payload.hasVariants,
     requiresSerialNumbers: !!payload.requiresSerialNumbers,
     trackExpiration: !!payload.trackExpiration,
