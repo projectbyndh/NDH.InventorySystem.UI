@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import WarehouseService from "../Api/Warehouseapi";    
 import useLoginStore from "../Store/Loginstore";
+import { handleError } from "../UI/errorHandler";
 
 export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
   const { token } = useLoginStore();
@@ -42,9 +43,9 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
         setTotal(count);
         setPage(customPage);
       } catch (err) {
+        handleError(err, { title: "Failed to load warehouses" });
         const msg = err?.response?.data?._message || err?.message || "Failed to load warehouses";
         setError(msg);
-        console.error("Warehouse fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -64,6 +65,7 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
       await fetchWarehouses(1);
       return created;
     } catch (err) {
+      handleError(err, { title: "Create failed" });
       const msg = err?.response?.data?._message || "Create failed";
       setError(msg);
       throw err;
@@ -80,6 +82,7 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
       await fetchWarehouses(page);
       return updated;
     } catch (err) {
+      handleError(err, { title: "Update failed" });
       const msg = err?.response?.data?._message || "Update failed";
       setError(msg);
       throw err;
@@ -95,6 +98,7 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
       await WarehouseService.delete(id);
       await fetchWarehouses(page);
     } catch (err) {
+      handleError(err, { title: "Delete failed" });
       const msg = err?.response?.data?._message || "Delete failed";
       setError(msg);
       throw err;

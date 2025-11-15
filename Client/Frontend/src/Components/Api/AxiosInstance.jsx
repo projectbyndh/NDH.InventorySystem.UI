@@ -1,5 +1,6 @@
 import axios from "axios";
 import useLoginStore from "../Store/Loginstore";
+import { serverToast } from "../UI/toast";
 
 const axiosInstance = axios.create({
   baseURL: "http://ndhinventoryapi-001-site1.mtempurl.com/api",
@@ -26,7 +27,43 @@ axiosInstance.interceptors.request.use((config) => {
 });
 
 axiosInstance.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    try {
+        const cfg = res?.config || {};
+        const method = (cfg.method || "").toLowerCase();
+        const body = res?.data ?? res;
+
+        // Attempt to extract message, type/severity, duration from common shapes
+        const message =
+          body?._message ??
+          body?.message ??
+          (body?._data && (body._data._message || body._data.message)) ??
+          (typeof body === "string" ? body : undefined);
+
+        const providedType = body?.type || body?.severity || body?.level || (body?._data && (body._data.type || body._data.severity));
+        const providedDuration = body?.duration ?? body?.ttl ?? (body?._data && body._data.duration);
+
+        // Determine toast type: prefer server-provided, else success for 2xx mutating responses
+        let toastType = providedType || (res.status >= 200 && res.status < 300 ? "success" : "info");
+
+        // Some APIs send a boolean `success` flag — if it's explicitly false treat as error
+        if (body && typeof body.success === "boolean" && body.success === false) {
+          toastType = "error";
+        }
+
+        // show backend messages for non-GET mutating responses unless the
+        // request explicitly disabled server-toasts via `config.showToast === false`.
+        if (message && method !== "get") {
+          const dur = providedDuration ? Number(providedDuration) : 3500;
+          if (cfg.showToast !== false) {
+            serverToast(String(message), toastType, dur);
+          }
+        }
+    } catch {
+      // ignore toast failures
+    }
+    return res;
+  },
   async (error) => {
     const original = error?.config || {};
     const status = error?.response?.status;
@@ -80,6 +117,15 @@ axiosInstance.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    // surface backend error message if present
+    try {
+      const body = error?.response?.data ?? error?.response;
+      const msg = body?._message ?? body?.message ?? (body?._data && (body._data._message || body._data.message));
+      if (msg && original.showToast !== false) serverToast(String(msg), "error", 6000);
+    } catch {
+      // ignore
     }
 
     return Promise.reject(error);

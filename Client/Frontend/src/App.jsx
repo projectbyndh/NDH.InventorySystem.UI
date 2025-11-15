@@ -15,6 +15,7 @@ import Analytics from "./Components/Analytics/Analytics";
 import LoginPage from "./Components/Authentication/Login";
 import Setting from "./Components/Settings/Setting";
 import VendorManager from "./Components/Inventory/VendorManager";
+import RouteNotifier from "./Components/UI/RouteNotifier";
 import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
 import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
 import CategoryCRUD from "./Components/Inventory/CategoryCRUD";
@@ -51,19 +52,82 @@ function App() {
           <Route path="analytics" element={<Analytics />} />
 
           {/* Inventory */}
-          <Route path="inventory/products" element={<Addproducts />} />
-          <Route path="inventory/categories" element={<AddCategory />} />
-          <Route path="inventory/vendordetails" element={<VendorManager />} />
-          <Route path="inventory/warehouse" element={<WareHouse />} />
+          <Route
+            path="inventory/products"
+            element={
+              <RouteNotifier name="Products">
+                <Addproducts />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="inventory/categories"
+            element={
+              <RouteNotifier name="Categories">
+                <AddCategory />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="inventory/vendordetails"
+            element={
+              <RouteNotifier name="Vendor Manager">
+                <VendorManager />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="inventory/warehouse"
+            element={
+              <RouteNotifier name="Warehouse">
+                <WareHouse />
+              </RouteNotifier>
+            }
+          />
 
           {/* Reports */}
-          <Route path="reports/measurement" element={<UnitManagement />} />
-          <Route path="reports/user-management" element={<UserManagement />} />
-          <Route path="reports/userprofile" element={<UserProfile />} />
+          <Route
+            path="reports/measurement"
+            element={
+              <RouteNotifier name="Unit Management">
+                <UnitManagement />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="reports/user-management"
+            element={
+              <RouteNotifier name="User Management">
+                <UserManagement />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="reports/userprofile"
+            element={
+              <RouteNotifier name="User Profile">
+                <UserProfile />
+              </RouteNotifier>
+            }
+          />
 
           {/* CATEGORY CRUD – FIXED PATH */}
-          <Route path="inventory/category-rdu" element={<CategoryCRUD />} />
-          <Route path="inventory/product-crud" element={<ProductCRUD />} />
+          <Route
+            path="inventory/category-rdu"
+            element={
+              <RouteNotifier name="Category CRUD">
+                <CategoryCRUD />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="inventory/product-crud"
+            element={
+              <RouteNotifier name="Product CRUD">
+                <ProductCRUD />
+              </RouteNotifier>
+            }
+          />
 
           {/* vendor details*/}
           <Route path="settings" element={<Setting />} />

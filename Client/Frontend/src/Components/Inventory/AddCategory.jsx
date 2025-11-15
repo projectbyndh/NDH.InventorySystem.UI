@@ -11,12 +11,13 @@ import {
   ChevronDown,
   AlertCircle,
   CheckCircle,
-  Loader2,
   X,
   Layers,
   Settings,
   Tag,
 } from "lucide-react";
+import Spinner from "../UI/Spinner";
+import { handleError } from "../UI/errorHandler";
 
 const required = <span className="text-red-500">*</span>;
 
@@ -92,7 +93,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
         ]);
       } catch (e) {
         if (mounted) {
-          console.warn("Failed to load parent categories:", e);
+          handleError(e, { title: "Failed to load parent categories" });
           setError("Could not load parent categories.");
         }
       } finally {
@@ -124,7 +125,8 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
       const dataUrl = await fileToDataUrl(file);
       setPreview(URL.createObjectURL(file));
       setImageUrl(dataUrl);
-    } catch {
+    } catch (err) {
+      handleError(err, { title: "Failed to read image" });
       setError("Failed to read image");
     }
   };
@@ -183,6 +185,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
       onSaved?.(result);
       setTimeout(() => setSuccess(false), 2000);
     } catch (err) {
+      handleError(err, { title: "Failed to save category" });
       const msg =
         err?.response?.data?._message ||
         err?.response?.data?.title ||
@@ -342,7 +345,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
               <label className="block text-sm font-semibold text-slate-800 mb-2">Parent Category</label>
               {loadingParents ? (
                 <div className="flex items-center gap-2 text-slate-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Spinner size={4} className="inline-block" />
                   Loading...
                 </div>
               ) : (
@@ -362,10 +365,10 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-2">Default Unit of Measure</label>
               {unitsLoading ? (
-                <div className="flex items-center gap-2 text-slate-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading units...
-                </div>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Spinner size={4} className="inline-block" />
+                    Loading units...
+                  </div>
               ) : (
                 <select
                   value={defaultUnitOfMeasure}
@@ -453,7 +456,7 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
             className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Spinner className="w-5 h-5" />
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />

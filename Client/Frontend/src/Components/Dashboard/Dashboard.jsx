@@ -3,8 +3,9 @@ import React, { useEffect, useState } from "react";
 import { fetchDashboardCounts } from "../Api/Dashbaordapi";
 import {
   Users, Package, Tags, Building2, Warehouse,
-  AlertCircle, Loader2
+  AlertCircle
 } from "lucide-react";
+import Spinner from "../UI/Spinner";
 
 const MetricCard = ({ icon: Icon, label, value, color }) => (
   <div className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-5 hover:shadow-xl transition-all">
@@ -48,7 +49,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-sky-600 mx-auto mb-4" />
+          <Spinner className="w-12 h-12 text-sky-600 mx-auto mb-4" />
           <p className="text-slate-600">Loading dashboard...</p>
         </div>
       </div>

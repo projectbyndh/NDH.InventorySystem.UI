@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
@@ -28,6 +28,7 @@ const ProfessionalSidebar = () => {
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
 
   // Responsiveness: Collapse sidebar on small screens
   useEffect(() => {
@@ -45,7 +46,7 @@ const ProfessionalSidebar = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     {
       id: 'dashboard',
       title: 'Dashboard',
@@ -56,7 +57,7 @@ const ProfessionalSidebar = () => {
 
     {
       id: 'inventory',
-      title: 'Inventory',
+      title: 'More Feature',
       icon: Package,
       children: [
         { id: 'products', title: 'Products', icon: Package, path: '/inventory/products' },
@@ -87,7 +88,7 @@ const ProfessionalSidebar = () => {
     //   children: [
     //   ]
     // }
-  ];
+  ], []);
 
   const bottomMenuItems = [
 
@@ -105,6 +106,37 @@ const ProfessionalSidebar = () => {
       [menuId]: !prev[menuId]
     }));
   };
+
+  // Update active menu from current route so direct navigation and refreshes highlight correctly
+  useEffect(() => {
+    const pathname = location?.pathname || '/';
+    let found = null;
+    let parentFound = null;
+
+    for (const item of menuItems) {
+      if (item.path && pathname.startsWith(item.path)) {
+        found = item.id;
+        break;
+      }
+      if (item.children) {
+        for (const child of item.children) {
+          if (child.path && pathname.startsWith(child.path)) {
+            found = child.id;
+            parentFound = item.id;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+
+    if (found) {
+      setActiveMenu(found);
+      if (parentFound) {
+        setExpandedMenus(prev => ({ ...prev, [parentFound]: true }));
+      }
+    }
+  }, [location?.pathname]);
 
   const handleMenuClick = (menuId, hasChildren = false) => {
     if (hasChildren) {

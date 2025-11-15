@@ -1,3 +1,16 @@
+import React from 'react';
+
+export default function Input(props) {
+  return (
+    <input
+      {...props}
+      className={
+        'w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-[15px] outline-none transition ' +
+        'placeholder:text-slate-400 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400'
+      }
+    />
+  );
+}
 import React from "react";
 
 const Input = ({ label, type = "text", value, onChange, placeholder, error }) => {

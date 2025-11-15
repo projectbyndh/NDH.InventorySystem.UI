@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import CategoryService from "../Api/Categoryapi";
 import useLoginStore from "./Loginstore";
+import { handleError } from "../UI/errorHandler";
 
 const useCategoryStore = create((set, get) => ({
   categories: [],
@@ -23,6 +24,7 @@ const useCategoryStore = create((set, get) => ({
       const total = data?.total ?? data?.count ?? list.length ?? 0;
       set({ categories: Array.isArray(list) ? list : [], total });
     } catch (err) {
+      handleError(err, { title: "Failed to load categories" });
       set({ error: err?.response?.data?.message || "Failed to load." });
     } finally {
       set({ loading: false });
@@ -41,10 +43,10 @@ const useCategoryStore = create((set, get) => ({
     return CategoryService.update(id, payload);
   },
 
-  deleteCategory: async (id) => {
+  deleteCategory: async (id, config = {}) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return CategoryService.remove(id);
+    return CategoryService.remove(id, config);
   },
 }));
 

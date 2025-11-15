@@ -8,7 +8,6 @@ import useUnitOfMeasureStore from "../Store/Unitofmeasurement";
 import {
   Plus,
   Trash2,
-  Loader2,
   ChevronLeft,
   AlertCircle,
   CheckCircle,
@@ -21,6 +20,8 @@ import {
   Layers,
   Settings,
 } from "lucide-react";
+import Spinner from "../UI/Spinner";
+import { handleError } from "../UI/errorHandler";
 
 export default function AddProduct() {
   const { id } = useParams();
@@ -97,7 +98,8 @@ export default function AddProduct() {
             })),
             attributes: p.attributes || [],
           });
-        } catch {
+        } catch (err) {
+          handleError(err, { title: "Product load failed" });
           alert("Product not found");
           navigate("/inventory/product-crud");
         } finally {
@@ -223,6 +225,7 @@ export default function AddProduct() {
       setSuccess(true);
       setTimeout(() => navigate("/inventory/product-crud"), 1500);
     } catch (err) {
+      handleError(err, { title: "Failed to save product" });
       const message = err?.response?.data?._message || "Failed to save product.";
       setErrors({ submit: message });
     } finally {
@@ -235,7 +238,7 @@ export default function AddProduct() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-sky-600 mx-auto mb-4" />
+          <Spinner size={12} className="mx-auto mb-4 text-sky-600" />
           <p className="text-slate-600">Loading form data...</p>
         </div>
       </div>
@@ -667,7 +670,7 @@ export default function AddProduct() {
                 className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <Spinner size={6} className="inline-block" />
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5" />

@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import UnitOfMeasureService from "../Api/Unitofmeasurement";
 import useLoginStore from "./Loginstore";
+import { handleError } from "../UI/errorHandler";
 
 const useUnitOfMeasureStore = create((set) => ({
   units: [],
@@ -20,6 +21,7 @@ const useUnitOfMeasureStore = create((set) => ({
       const total = data?.total ?? data?.count ?? list.length ?? 0;
       set({ units: Array.isArray(list) ? list : [], total });
     } catch (err) {
+      handleError(err, { title: "Failed to load units" });
       set({ error: err?.response?.data?._message || "Load failed" });
     } finally {
       set({ loading: false });

@@ -5,8 +5,7 @@ import useUnitOfMeasureStore from "../Store/Unitofmeasurement"; // ← Keep if t
 import { 
   Plus, 
   Edit2, 
-  Trash2, 
-  Loader2,
+  Trash2,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -15,6 +14,8 @@ import {
   Trash2 as TrashIcon
 } from "lucide-react";
 import React from "react";
+import Spinner from "../UI/Spinner";
+import { handleError } from "../UI/errorHandler";
 export default function UnitOfMeasureManager() {
   const navigate = useNavigate();
   const { units, fetchUnits, createUnit, updateUnit, deleteUnit } = useUnitOfMeasureStore();
@@ -140,6 +141,7 @@ export default function UnitOfMeasureManager() {
         setForm({ name: "", symbol: "", description: "" });
       }, 800);
     } catch (err) {
+      handleError(err, { title: "Save failed" });
       setErrors({ submit: err?.response?.data?._message || "Save failed" });
     } finally {
       setLoading(false);
@@ -162,6 +164,7 @@ export default function UnitOfMeasureManager() {
       await fetchUnits({ pageNumber: page, pageSize });
       closeDeleteModal();
     } catch (err) {
+      handleError(err, { title: "Delete failed" });
       alert("Delete failed");
     } finally {
       setLoading(false);
@@ -289,7 +292,7 @@ export default function UnitOfMeasureManager() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Spinner className="w-5 h-5" />
                       Saving...
                     </>
                   ) : (
@@ -457,7 +460,7 @@ export default function UnitOfMeasureManager() {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner className="w-4 h-4" />
                     Deleting...
                   </>
                 ) : (

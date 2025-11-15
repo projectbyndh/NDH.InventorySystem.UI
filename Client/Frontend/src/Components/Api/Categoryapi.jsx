@@ -84,7 +84,7 @@ update: (id, payload) => {
 },
 
 
-  remove: (id) => axiosInstance.delete(`/Category/delete/${id}`).then(unwrap),
+  remove: (id, config = {}) => axiosInstance.delete(`/Category/delete/${id}`, config).then(unwrap),
 };
 
 export default CategoryService;

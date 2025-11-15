@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import VendorService from "../Api/VendorApi";
 import useLoginStore from "./Loginstore";
+import { handleError } from "../UI/errorHandler";
 
 const useVendorStore = create((set) => ({
   vendors: [],
@@ -20,6 +21,7 @@ const useVendorStore = create((set) => ({
       const total = data?.total ?? data?.count ?? list.length ?? 0;
       set({ vendors: Array.isArray(list) ? list : [], total });
     } catch (err) {
+      handleError(err, { title: "Failed to load vendors" });
       set({ error: err?.response?.data?._message || "Load failed" });
     } finally {
       set({ loading: false });

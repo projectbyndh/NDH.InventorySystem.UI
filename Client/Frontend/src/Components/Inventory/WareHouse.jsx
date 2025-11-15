@@ -6,11 +6,11 @@ import { useWarehouse } from "../Hooks/Warehousehooks";
 import useLoginStore from "../Store/Loginstore";
 import DropdownService from "../Api/Dropdown";
 import React from "react";
+import { handleError } from "../UI/errorHandler";
 import {
   Plus,
   Edit2,
   Trash2,
-  Loader2,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +24,12 @@ import {
   Hash,
   Settings,
 } from "lucide-react";
+import SearchInput from "../UI/SearchInput";
+import Spinner from "../UI/Spinner";
+import ConfirmModal from "../UI/ConfirmModal";
+import TableWrapper from "../UI/TableWrapper";
+import EmptyState from "../UI/EmptyState";
+import Pagination from "../UI/Pagination";
 
 export default function WarehouseManager() {
   const navigate = useNavigate();
@@ -136,12 +142,12 @@ export default function WarehouseManager() {
         // console.log("Municipalities:", municipalities);
         // console.log("State/Provinces:", stateProvinces);
       } catch (err) {
+        handleError(err, { title: "Failed to load location dropdowns" });
         const msg =
           err?.response?.data?._message ||
           err?.message ||
           "Failed to load location dropdowns";
         setDropdownError(msg);
-        console.error("Dropdown load error:", err);
       } finally {
         setDropdownLoading(false);
       }
@@ -344,7 +350,7 @@ export default function WarehouseManager() {
             },
           });
         } catch (err) {
-          console.warn("Could not fetch updated warehouse:", err);
+          handleError(err, { title: "Could not fetch updated warehouse" });
         }
 
         setSuccess(true);
@@ -358,6 +364,7 @@ export default function WarehouseManager() {
         }, 800);
       }
     } catch (err) {
+      handleError(err, { title: "Failed to save warehouse" });
       setErrors({ submit: err?.message || "Failed to save warehouse" });
     } finally {
       setFormLoading(false);
@@ -379,7 +386,7 @@ export default function WarehouseManager() {
       await fetchWarehouses(page);
       closeDelete();
     } catch (err) {
-      console.error("Delete failed:", err);
+      handleError(err, { title: "Delete failed" });
       alert("Delete failed: " + (err?.message || "Unknown"));
     } finally {
       setFormLoading(false);
@@ -743,11 +750,11 @@ export default function WarehouseManager() {
                              flex items-center justify-center gap-2 shadow-lg"
                 >
                   {formLoading ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
+                      <>
+                        <Spinner className="w-6 h-6" />
+                        Saving...
+                      </>
+                    ) : (
                     <>{editingId ? "Update Warehouse" : "Create Warehouse"}</>
                   )}
                 </button>
@@ -789,43 +796,26 @@ export default function WarehouseManager() {
 
         {/* Search */}
         <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by name or contact..."
-              className="w-full pl-12 pr-6 py-4 rounded-xl border border-slate-300 text-base
-                         focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
-          </div>
+          <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search by name or contact..." />
         </div>
 
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {hookLoading && paginated.length === 0 ? (
             <div className="p-12 text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-slate-400 mx-auto" />
+              <Spinner className="mx-auto" size={12} />
             </div>
           ) : paginated.length === 0 ? (
             <div className="p-16 text-center">
-              <div className="bg-slate-100 w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Building2 className="w-12 h-12 text-slate-400" />
+              <EmptyState icon={<Building2 className="w-12 h-12 text-slate-400" />} title="No warehouses found." subtitle="Try adding your first warehouse." />
+              <div className="mt-4">
+                <button onClick={startCreate} className="mt-4 text-slate-900 font-semibold hover:underline">
+                  Add your first warehouse
+                </button>
               </div>
-              <p className="text-slate-500 text-lg">No warehouses found.</p>
-              <button
-                onClick={startCreate}
-                className="mt-4 text-slate-900 font-semibold hover:underline"
-              >
-                Add your first warehouse
-              </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <TableWrapper>
               <table className="w-full">
                 <thead className="bg-slate-50 border-b-2 border-slate-200">
                   <tr>
@@ -837,10 +827,7 @@ export default function WarehouseManager() {
                 </thead>
                 <tbody>
                   {paginated.map((w) => (
-                    <tr
-                      key={w.id}
-                      className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                    >
+                    <tr key={w.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-5 font-semibold text-slate-900">{w.name}</td>
                       <td className="px-6 py-5 text-slate-600">{w.contactPerson}</td>
                       <td className="px-6 py-5 text-slate-600">
@@ -874,71 +861,28 @@ export default function WarehouseManager() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableWrapper>
           )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-8 flex justify-center items-center gap-3">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-3 rounded-xl bg-white shadow hover:shadow-md disabled:opacity-50 transition-all"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-slate-700 font-medium">
-              Page <strong>{page}</strong> of <strong>{totalPages}</strong>
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="p-3 rounded-xl bg-white shadow hover:shadow-md disabled:opacity-50 transition-all"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            <Pagination page={page} pageCount={totalPages} onPrev={() => setPage((p) => Math.max(1, p - 1))} onNext={() => setPage((p) => Math.min(totalPages, p + 1))} />
           </div>
         )}
       </div>
 
-      {/* DELETE MODAL */}
-      {deleteModal.open && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-blue-600/10 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-3 bg-red-100 rounded-full">
-                <Trash2 className="w-7 h-7 text-red-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900">Delete Warehouse?</h3>
-            </div>
-            <p className="text-slate-600 mb-8 leading-relaxed">
-              Permanently delete <strong>{deleteModal.name}</strong>?
-              <br />
-              <span className="text-red-600 text-sm">This action cannot be undone.</span>
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={confirmDelete}
-                disabled={formLoading}
-                className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-lg
-                           hover:bg-red-700 disabled:opacity-50 transition-all
-                           flex items-center justify-center gap-2"
-              >
-                {formLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Delete"}
-              </button>
-              <button
-                onClick={closeDelete}
-                disabled={formLoading}
-                className="flex-1 border-2 border-slate-300 text-slate-700 py-3 rounded-xl font-bold text-lg
-                           hover:bg-slate-50 disabled:opacity-50 transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={closeDelete}
+        onConfirm={confirmDelete}
+        title="Delete Warehouse?"
+        message={`Permanently delete ${deleteModal.name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={formLoading}
+      />
     </div>
   );
 }

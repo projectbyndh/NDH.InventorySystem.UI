@@ -24,72 +24,24 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import toast from "../UI/toast";
+import { handleError } from "../UI/errorHandler";
 
 import useCategoryStore from "../Store/Categorystore";
 import CategoryForm from "./AddCategory";
 import useLoginStore from "../Store/Loginstore";
+import Modal from "../UI/Modal";
+import ConfirmModal from "../UI/ConfirmModal";
+import TableWrapper from "../UI/TableWrapper";
+import EmptyState from "../UI/EmptyState";
+import Spinner from "../UI/Spinner";
+import SearchInput from "../UI/SearchInput";
+import Pagination from "../UI/Pagination";
 
-/* ── MODAL ───────────────────────────────────────────── */
-function Modal({ open, onClose, title, children }) {
-  if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl animate-slideUp">
-        <div className="flex items-center justify-between mb-5 border-b border-slate-200 pb-3">
-          <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5 text-slate-600" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
+// Using shared Modal component from ../UI/Modal
 
-/* ── DELETE CONFIRM MODAL ───────────────────────────── */
-function DeleteConfirmModal({ open, onClose, onConfirm, name }) {
-  if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-slideUp">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-full bg-red-100">
-            <AlertCircle className="h-6 w-6 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900">Delete Category?</h3>
-        </div>
-        <p className="text-sm text-slate-600 mb-6">
-          Are you sure you want to delete <strong>{name}</strong>? This action cannot be undone.
-        </p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── MAIN PAGE ─────────────────────────────────────── */
 export default function CategoryCRUD() {
   const {
     categories,
@@ -110,12 +62,12 @@ export default function CategoryCRUD() {
   const [page, setPage] = useState(1);
   const pageSize = 15;
 
-  /* ── FETCH DATA BY PAGE ───────────────────────────── */
+  
   useEffect(() => {
     fetchCategories({ pageNumber: page, pageSize });
   }, [page, fetchCategories]);
 
-  /* ── CLIENT‑SIDE SEARCH ───────────────────────────── */
+  
   const filtered = useMemo(() => {
     if (!search.trim()) return categories;
     const term = search.toLowerCase();
@@ -127,7 +79,7 @@ export default function CategoryCRUD() {
     );
   }, [categories, search]);
 
-  /* ── TABLE COLUMNS ────────────────────────────────── */
+  
   const columns = useMemo(
     () => [
       {
@@ -278,7 +230,7 @@ export default function CategoryCRUD() {
     },
   });
 
-  /* ── MODAL HELPERS ─────────────────────────────────── */
+  
   const openEdit = (cat) => {
     setEditingCat(cat); // full object with id
     setModalOpen(true);
@@ -296,7 +248,7 @@ export default function CategoryCRUD() {
     setDeleteModal({ open: false, id: null, name: "" });
   };
 
-  /* ── UPDATE (EDIT) ────────────────────────────────── */
+  
   const handleSaved = async (formData) => {
     if (!editingCat?.id) return;
 
@@ -310,12 +262,13 @@ export default function CategoryCRUD() {
         logout();
         window.location.href = "/login";
       } else {
+        handleError(err, { title: "Failed to update" });
         toast.error("Failed to update.", { icon: <XCircle className="h-5 w-5" /> });
       }
     }
   };
 
-  /* ── DELETE ───────────────────────────────────────── */
+  
   const handleDeleteConfirm = async () => {
     const id = deleteModal.id;
     closeDelete();
@@ -323,7 +276,9 @@ export default function CategoryCRUD() {
     const toastId = toast.loading("Deleting...");
 
     try {
-      await deleteCategory(id);
+      // suppress server-sent toast because this component already shows
+      // a loading -> success update using the toast proxy
+      await deleteCategory(id, { showToast: false });
       toast.success("Deleted!", { id: toastId, icon: <CheckCircle className="h-5 w-5" /> });
 
       if (filtered.length === 1 && page > 1) {
@@ -336,12 +291,13 @@ export default function CategoryCRUD() {
         logout();
         window.location.href = "/login";
       } else {
+        handleError(err, { title: "Delete failed" });
         toast.error("Delete failed.", { id: toastId, icon: <XCircle className="h-5 w-5" /> });
       }
     }
   };
 
-  /* ── RENDER ─────────────────────────────────────────── */
+  
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-8">
       {/* HEADER */}
@@ -367,16 +323,7 @@ export default function CategoryCRUD() {
 
       {/* SEARCH + FILTER */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search name, code, description..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 h-11 rounded-xl border border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-shadow"
-          />
-        </div>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search name, code, description..." />
 
         <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
           <Filter className="h-4 w-4" />
@@ -387,7 +334,7 @@ export default function CategoryCRUD() {
       {/* LOADING / ERROR */}
       {loading && (
         <div className="flex flex-col items-center py-16 text-slate-500">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-sky-600 mb-4"></div>
+          <Spinner className="h-12 w-12 mb-4" />
           <p>Loading categories...</p>
         </div>
       )}
@@ -402,50 +349,42 @@ export default function CategoryCRUD() {
       {/* TABLE + PAGINATION */}
       {!loading && !error && (
         <>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                  {table.getHeaderGroups().map((hg) => (
-                    <tr key={hg.id}>
-                      {hg.headers.map((h) => (
-                        <th
-                          key={h.id}
-                          className="px-5 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
-                        >
-                          {flexRender(h.column.columnDef.header, h.getContext())}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {table.getRowModel().rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="hover:bg-slate-50 transition-colors duration-150"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-5 py-4 text-sm">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <TableWrapper>
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                {table.getHeaderGroups().map((hg) => (
+                  <tr key={hg.id}>
+                    {hg.headers.map((h) => (
+                      <th
+                        key={h.id}
+                        className="px-5 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
+                      >
+                        {flexRender(h.column.columnDef.header, h.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="hover:bg-slate-50 transition-colors duration-150"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-5 py-4 text-sm">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableWrapper>
 
-            {table.getRowModel().rows.length === 0 && (
-              <div className="py-20 text-center text-slate-500">
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
-                  <Package className="h-8 w-8 text-slate-400" />
-                </div>
-                <p className="text-lg font-medium">No categories found.</p>
-                <p className="mt-1 text-sm">Try adjusting your search.</p>
-              </div>
-            )}
-          </div>
+          {table.getRowModel().rows.length === 0 && (
+            <EmptyState icon={<Package className="h-8 w-8 text-slate-400" />} title="No categories found." subtitle="Try adjusting your search." />
+          )}
 
           {total > 0 && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-slate-600">
@@ -454,23 +393,7 @@ export default function CategoryCRUD() {
                 <strong>{Math.min(page * pageSize, total)}</strong> of <strong>{total}</strong> results
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </button>
-                <span className="px-3 py-2 font-medium text-slate-900">Page {page}</span>
-                <button
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                <Pagination page={page} pageCount={Math.ceil(total / pageSize)} onPrev={() => table.previousPage()} onNext={() => table.nextPage()} />
               </div>
             </div>
           )}
@@ -491,11 +414,13 @@ export default function CategoryCRUD() {
       </Modal>
 
       {/* DELETE CONFIRM MODAL */}
-      <DeleteConfirmModal
+      <ConfirmModal
         open={deleteModal.open}
         onClose={closeDelete}
         onConfirm={handleDeleteConfirm}
-        name={deleteModal.name}
+        title="Delete Category?"
+        message={<span>Are you sure you want to delete <strong>{deleteModal.name}</strong>? This action cannot be undone.</span>}
+        confirmText="Delete"
       />
     </div>
   );

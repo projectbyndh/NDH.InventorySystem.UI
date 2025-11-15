@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import ProductService from "../Api/Productapi";
 import useLoginStore from "./Loginstore";
+import { handleError } from "../UI/errorHandler";
 
 const useProductStore = create((set, get) => ({
   products: [],
@@ -22,6 +23,7 @@ const useProductStore = create((set, get) => ({
       const total = data?.total ?? list.length;
       set({ products: list, total });
     } catch (err) {
+      handleError(err, { title: "Failed to load products" });
       set({ error: err?.response?.data?._message || "Failed to load products" });
     } finally {
       set({ loading: false });
@@ -39,6 +41,7 @@ const useProductStore = create((set, get) => ({
       set({ product: data });
       return data;
     } catch (err) {
+      handleError(err, { title: "Product not found" });
       const msg = err?.response?.data?._message || "Product not found";
       set({ error: msg });
       throw err;

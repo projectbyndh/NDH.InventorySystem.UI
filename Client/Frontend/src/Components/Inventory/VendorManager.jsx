@@ -5,12 +5,11 @@ import useLoginStore from "../Store/Loginstore";
 import VendorService from "../Api/VendorApi";
 import DropdownService from "../Api/Dropdown";
 import React from "react";
+import { handleError } from "../UI/errorHandler";
 import {
   Plus,
   Edit2,
   Trash2,
-  Loader2,
-  Search,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
@@ -23,6 +22,12 @@ import {
   Globe,
   Hash,
 } from "lucide-react";
+import SearchInput from "../UI/SearchInput";
+import Spinner from "../UI/Spinner";
+import ConfirmModal from "../UI/ConfirmModal";
+import TableWrapper from "../UI/TableWrapper";
+import EmptyState from "../UI/EmptyState";
+import Pagination from "../UI/Pagination";
 
 export default function VendorManager() {
   const navigate = useNavigate();
@@ -94,7 +99,7 @@ export default function VendorManager() {
       }));
       setVendors(normalized);
     } catch (err) {
-      console.error("Failed to fetch vendors:", err);
+      handleError(err, { title: "Failed to fetch vendors" });
       setVendors([]);
     } finally {
       setFetchLoading(false);
@@ -134,6 +139,7 @@ export default function VendorManager() {
         setMunicipalities(unwrap(mRes));
         setStateProvinces(unwrap(sRes));
       } catch (err) {
+          handleError(err, { title: "Failed to load dropdowns" });
           setDropdownError(err?.message ?? "Failed to load dropdowns");
       } finally {
         setDropdownLoading(false);
@@ -259,7 +265,7 @@ export default function VendorManager() {
         },
       });
     } catch (err) {
-      console.error("Failed to load vendor details:", err);
+      handleError(err, { title: "Failed to load vendor details" });
       // fallback: populate from provided item
       setForm({
         name: v.name ?? "",
@@ -348,7 +354,7 @@ export default function VendorManager() {
           });
         } catch (err) {
           // if fetching updated vendor fails, keep current form values
-          console.warn("Could not fetch updated vendor after save:", err);
+          handleError(err, { title: "Could not fetch updated vendor after save" });
         }
         setSuccess(true);
       } else {
@@ -363,6 +369,7 @@ export default function VendorManager() {
         }, 800);
       }
     } catch (err) {
+        handleError(err, { title: "Save failed" });
         setErrors({ submit: err?.message || "Save failed" });
     } finally {
       setLoading(false);
@@ -381,7 +388,7 @@ export default function VendorManager() {
       await fetchVendors({ pageNumber: page, pageSize });
       setDeleteModal({ open: false, id: null, name: "" });
     } catch (err) {
-      console.error("Delete error for id", id, err);
+      handleError(err, { title: "Delete failed" });
       const msg = err?.response?.data?._message || err?.response?.data?.message || err?.message || "Unknown";
       alert("Delete failed: " + msg);
     } finally {
@@ -556,7 +563,15 @@ export default function VendorManager() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">State / Province</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      State / Province
+                      {dropdownLoading && (
+                        <span className="ml-3 inline-flex items-center text-sm text-slate-500">
+                          <Spinner className="w-4 h-4 mr-2" />
+                          Loading...
+                        </span>
+                      )}
+                    </label>
                     <select
                       value={form.location.stateProvince}
                       onChange={(e) => handleLoc("stateProvince", e.target.value)}
@@ -573,7 +588,15 @@ export default function VendorManager() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">District</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      District
+                      {dropdownLoading && (
+                        <span className="ml-3 inline-flex items-center text-sm text-slate-500">
+                          <Spinner className="w-4 h-4 mr-2" />
+                          Loading...
+                        </span>
+                      )}
+                    </label>
                     <select
                       value={form.location.district}
                       onChange={(e) => handleLoc("district", e.target.value)}
@@ -590,7 +613,15 @@ export default function VendorManager() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Municipality</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Municipality
+                      {dropdownLoading && (
+                        <span className="ml-3 inline-flex items-center text-sm text-slate-500">
+                          <Spinner className="w-4 h-4 mr-2" />
+                          Loading...
+                        </span>
+                      )}
+                    </label>
                     <select
                       value={form.location.municipality}
                       onChange={(e) => handleLoc("municipality", e.target.value)}
@@ -713,7 +744,7 @@ export default function VendorManager() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <Spinner size={6} className="inline-block mr-2" />
                       Saving...
                     </>
                   ) : (
@@ -757,40 +788,26 @@ export default function VendorManager() {
         </div>
 
         <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by name, contact, email..."
-              className="w-full pl-12 pr-6 py-4 rounded-xl border border-slate-300 text-base
-                         focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
-          </div>
+          <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search by name, contact, email..." />
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {fetchLoading ? (
             <div className="p-16 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-slate-400" />
+              <Spinner className="mx-auto mb-4" size={8} />
               <p className="text-slate-500">Loading vendors...</p>
             </div>
           ) : paginated.length === 0 ? (
             <div className="p-16 text-center">
-              <div className="bg-slate-100 w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Building2 className="w-12 h-12 text-slate-400" />
+              <EmptyState icon={<Building2 className="w-12 h-12 text-slate-400" />} title="No vendors found." subtitle="Try adjusting your search." />
+              <div className="mt-4">
+                <button onClick={startCreate} className="mt-4 text-slate-900 font-semibold hover:underline">
+                  Add your first vendor
+                </button>
               </div>
-              <p className="text-slate-500 text-lg">No vendors found.</p>
-              <button onClick={startCreate} className="mt-4 text-slate-900 font-semibold hover:underline">
-                Add your first vendor
-              </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <TableWrapper>
               <table className="w-full">
                 <thead className="bg-slate-50 border-b-2 border-slate-200">
                   <tr>
@@ -843,7 +860,7 @@ export default function VendorManager() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableWrapper>
           )}
         </div>
 
@@ -870,44 +887,16 @@ export default function VendorManager() {
         )}
       </div>
 
-      {/* DELETE MODAL */}
-      {deleteModal.open && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-white/10 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-3 bg-red-100 rounded-full">
-                <Trash2 className="w-7 h-7 text-red-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900">Delete Vendor?</h3>
-            </div>
-            <p className="text-slate-600 mb-8">
-              Are you sure you want to <strong>permanently delete</strong> vendor:
-              <br />
-              <span className="text-slate-900 font-semibold">{deleteModal.name}</span>?
-              <br />
-              <span className="text-red-600 text-sm">This action cannot be undone.</span>
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={confirmDelete}
-                disabled={loading}
-                className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-lg
-                           hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Delete"}
-              </button>
-              <button
-                onClick={() => setDeleteModal({ open: false, id: null, name: "" })}
-                disabled={loading}
-                className="flex-1 border-2 border-slate-300 text-slate-700 py-3 rounded-xl font-bold text-lg
-                           hover:bg-slate-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, id: null, name: "" })}
+        onConfirm={confirmDelete}
+        title="Delete Vendor?"
+        message={`Are you sure you want to permanently delete ${deleteModal.name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={loading}
+      />
     </div>
   );
 }

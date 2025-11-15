@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import WarehouseService from "../Api/Warehouseapi"; // Fixed path
 import useLoginStore from "./Loginstore";
+import { handleError } from "../UI/errorHandler";
 
 const useWarehouseStore = create((set) => ({
   warehouses: [],
@@ -20,6 +21,7 @@ const useWarehouseStore = create((set) => ({
       const total = data?.total ?? list.length;
       set({ warehouses: Array.isArray(list) ? list : [], total });
     } catch (err) {
+      handleError(err, { title: "Failed to load warehouses" });
       set({ error: err?.response?.data?._message || "Load failed" });
     } finally {
       set({ loading: false });
