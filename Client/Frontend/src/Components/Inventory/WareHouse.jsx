@@ -1,5 +1,6 @@
 // src/components/Management/WarehouseManager.jsx
 import { useState, useEffect, useRef } from "react";
+import WarehouseService from "../Api/Warehouseapi";
 import { useNavigate } from "react-router-dom";
 import { useWarehouse } from "../Hooks/Warehousehooks";
 import useLoginStore from "../Store/Loginstore";
@@ -61,10 +62,7 @@ export default function WarehouseManager() {
     if (!token) navigate("/login", { replace: true });
   }, [token, navigate]);
 
-  // Auto-fetch warehouses
-  useEffect(() => {
-    if (token) fetchWarehouses();
-  }, [token, fetchWarehouses]);
+  // Warehouse list is auto-fetched by the hook; no duplicate fetch here.
 
   // NORMALIZE API RESPONSE
   const normalizeOptions = (res) => {
@@ -74,6 +72,8 @@ export default function WarehouseManager() {
     if (Array.isArray(res?.results)) return res.results;
     return [];
   };
+
+  const getId = (it) => it?.id ?? it?.warehouseId ?? it?.warehouseID ?? it?.warehouse_id ?? it?._id ?? null;
 
   // DROPDOWN MAPPERS
   const mapOptionLabel = (opt) => {
@@ -243,7 +243,8 @@ export default function WarehouseManager() {
 
   const startEdit = (w) => {
     setMode("form");
-    setEditingId(w.id);
+    const id = getId(w);
+    setEditingId(id);
     setForm({
       name: w.name || "",
       contactPerson: w.contactPerson || "",
@@ -254,7 +255,7 @@ export default function WarehouseManager() {
         district: w.location?.district || "",
         municipality: w.location?.municipality || "",
         municipalityType: w.location?.municipalityType || "",
-        wardNo: w.location?.wardNo?.toString() || "",
+        wardNo: w.location?.wardNo != null ? String(w.location?.wardNo) : "",
         addressLine1: w.location?.addressLine1 || "",
         addressLine2: w.location?.addressLine2 || "",
         postalCode: w.location?.postalCode || "",
@@ -313,16 +314,49 @@ export default function WarehouseManager() {
 
       if (editingId) {
         await updateWarehouse(editingId, payload);
+        // refresh list
+        await fetchWarehouses(page);
+        // try to fetch authoritative warehouse and repopulate form
+        try {
+          const latest = await WarehouseService.getById(editingId);
+          const v = latest || {};
+          setForm({
+            name: v.name ?? form.name,
+            contactPerson: v.contactPerson ?? form.contactPerson,
+            contactNumber: v.contactNumber ?? form.contactNumber,
+            location: {
+              country: v.location?.country ?? form.location.country,
+              stateProvince: v.location?.stateProvince ?? form.location.stateProvince,
+              district: v.location?.district ?? form.location.district,
+              municipality: v.location?.municipality ?? form.location.municipality,
+              municipalityType: v.location?.municipalityType ?? form.location.municipalityType,
+              wardNo: v.location?.wardNo != null ? String(v.location?.wardNo) : String(form.location.wardNo || ""),
+              addressLine1: v.location?.addressLine1 ?? form.location.addressLine1,
+              addressLine2: v.location?.addressLine2 ?? form.location.addressLine2,
+              postalCode: v.location?.postalCode ?? form.location.postalCode,
+              latitude: v.location?.latitude ?? form.location.latitude,
+              longitude: v.location?.longitude ?? form.location.longitude,
+            },
+            customAttributes: {
+              additionalProp1: v.customAttributes?.additionalProp1 ?? form.customAttributes.additionalProp1,
+              additionalProp2: v.customAttributes?.additionalProp2 ?? form.customAttributes.additionalProp2,
+              additionalProp3: v.customAttributes?.additionalProp3 ?? form.customAttributes.additionalProp3,
+            },
+          });
+        } catch (err) {
+          console.warn("Could not fetch updated warehouse:", err);
+        }
+
+        setSuccess(true);
       } else {
         await createWarehouse(payload);
+        setSuccess(true);
+        setTimeout(() => {
+          setMode("list");
+          setEditingId(null);
+          setForm(initialForm);
+        }, 800);
       }
-
-      setSuccess(true);
-      setTimeout(() => {
-        setMode("list");
-        setEditingId(null);
-        setForm(initialForm);
-      }, 800);
     } catch (err) {
       setErrors({ submit: err?.message || "Failed to save warehouse" });
     } finally {
@@ -330,15 +364,23 @@ export default function WarehouseManager() {
     }
   };
 
-  const openDelete = (id, name) => setDeleteModal({ open: true, id, name });
+  const openDelete = (item) => setDeleteModal({ open: true, id: getId(item), name: item?.name || item?.title || "" });
   const closeDelete = () => setDeleteModal({ open: false, id: null, name: "" });
 
   const confirmDelete = async () => {
-    if (!deleteModal.id) return;
+    if (!deleteModal.id) {
+      alert("Cannot delete: missing identifier. Refresh list and try again.");
+      return;
+    }
+    const id = deleteModal.id;
     setFormLoading(true);
     try {
-      await deleteWarehouse(deleteModal.id);
+      await deleteWarehouse(id);
+      await fetchWarehouses(page);
       closeDelete();
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Delete failed: " + (err?.message || "Unknown"));
     } finally {
       setFormLoading(false);
     }
@@ -820,7 +862,7 @@ export default function WarehouseManager() {
                             <Edit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => openDelete(w.id, w.name)}
+                            onClick={() => openDelete(w)}
                             className="p-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all"
                             aria-label="Delete"
                           >
@@ -862,7 +904,7 @@ export default function WarehouseManager() {
 
       {/* DELETE MODAL */}
       {deleteModal.open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-blue-600/10 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-3 bg-red-100 rounded-full">

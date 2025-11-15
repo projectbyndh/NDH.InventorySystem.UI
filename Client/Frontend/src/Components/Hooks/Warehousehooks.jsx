@@ -1,6 +1,6 @@
 // src/hooks/useWarehouse.jsx
 import { useState, useEffect, useCallback } from "react";
-import WarehouseService from "../Api/Warehouseapi";     
+import WarehouseService from "../Api/Warehouseapi";    
 import useLoginStore from "../Store/Loginstore";
 
 export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
@@ -13,7 +13,7 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
   const [page, setPage] = useState(1);
 
   const fetchWarehouses = useCallback(
-    async (customPage = page) => {
+    async (customPage = 1) => {
       if (!token) {
         setError("Please log in");
         return;
@@ -23,17 +23,24 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
       setError(null);
 
       try {
-        console.log("Fetching warehouses...");
+        // fetching warehouses
         const response = await WarehouseService.getAll({
           pageNumber: customPage,
           pageSize,
         });
 
         const list = response?.items ?? response?.data ?? response ?? [];
-        const count = response?.total ?? list.length;
+        const count = response?.total ?? response?.totalCount ?? (Array.isArray(list) ? list.length : 0);
 
-        setWarehouses(Array.isArray(list) ? list : []);
+        // normalize id across possible server fields
+        const getId = (it) => it?.id ?? it?.warehouseId ?? it?.warehouseID ?? it?._id ?? it?.idValue ?? null;
+        const normalized = Array.isArray(list)
+          ? list.map((it) => ({ ...it, id: getId(it) }))
+          : [];
+
+        setWarehouses(normalized);
         setTotal(count);
+        setPage(customPage);
       } catch (err) {
         const msg = err?.response?.data?._message || err?.message || "Failed to load warehouses";
         setError(msg);
@@ -42,12 +49,12 @@ export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
         setLoading(false);
       }
     },
-    [token, page, pageSize]
+    [token, pageSize]
   );
-
+  // Run initial fetch once when token becomes available.
   useEffect(() => {
-    if (autoFetch && token) fetchWarehouses();
-  }, [fetchWarehouses, autoFetch, token]);
+    if (autoFetch && token) fetchWarehouses(page);
+  }, [autoFetch, token, fetchWarehouses, page]);
 
   const createWarehouse = async (payload) => {
     if (!token) throw new Error("Not authenticated");
