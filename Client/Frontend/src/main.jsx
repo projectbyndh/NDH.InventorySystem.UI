@@ -2,9 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import React from 'react'
 import './index.css'
-import 'react-toastify/dist/ReactToastify.css'
 import App from './App.jsx'
-import { ToastContainer } from 'react-toastify'
 import ErrorBoundary from './Components/UI/ErrorBoundary'
 import { showToast } from './Components/UI/toast'
 
@@ -13,7 +11,6 @@ createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
-    <ToastContainer position="top-right" newestOnTop closeOnClick pauseOnHover hideProgressBar={false} />
   </StrictMode>,
 )
 

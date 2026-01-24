@@ -3,7 +3,7 @@ import useLoginStore from "../Store/Loginstore";
 import { serverToast } from "../UI/toast";
 
 const axiosInstance = axios.create({
-  baseURL: "https://api-inventory.ndhtechnologies.com/swagger/index.html",
+  baseURL: "https://api-inventory.ndhtechnologies.com/api",
   headers: { "Content-Type": "application/json", Accept: "application/json" },
   withCredentials: false, 
 });

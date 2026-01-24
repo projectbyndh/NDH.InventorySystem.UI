@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Users, 
-  BarChart3, 
-  Settings, 
-  FileText, 
+import React, { useState, useEffect, useMemo } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Package,
+  Users,
+  BarChart3,
+  Settings,
+  FileText,
   ShoppingCart,
   Warehouse,
   TrendingUp,
@@ -21,95 +21,91 @@ import {
   Truck,
   CreditCard,
   Shield,
-  HelpCircle
-} from 'lucide-react';
+  HelpCircle,
+} from "lucide-react";
 
 const ProfessionalSidebar = () => {
-  const [activeMenu, setActiveMenu] = useState('dashboard');
+  const [activeMenu, setActiveMenu] = useState("dashboard");
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
 
-  // Responsiveness: Collapse sidebar on small screens
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) { // lg breakpoint, adjust as needed
+      if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
         setIsCollapsed(false);
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial check
+    window.addEventListener("resize", handleResize);
+    handleResize(); 
 
-    return () => window.removeEventListener('resize', handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const menuItems = useMemo(() => [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/dashboard',
-      badge: null
-    },
-
-    {
-      id: 'inventory',
-      title: 'More Feature',
-      icon: Package,
-      children: [
-        { id: 'products', title: 'Products', icon: Package, path: '/inventory/products' },
-        { id: 'categories', title: 'Categories', icon: Grid3X3, path: '/inventory/categories' },
-        { id: 'vendor', title: 'Vendor', icon: Warehouse, path: '/inventory/vendordetails' },
-        { id: 'warehouse', title: 'Warehouse', icon: Truck, path: '/inventory/warehouse' },
-        { id: 'measurement', title: 'Unit of Measurement ', icon: TrendingUp, path: '/reports/measurement' },
-
-      ]
-    },
-    // {
-    //   id: 'orders',
-    //   title: 'Orders',
-    //   icon: ShoppingCart,
-    //   children: [
-    //     { id: 'all-orders', title: 'All Orders', icon: FileText, path: '/orders/all' },
-    //     { id: 'pending', title: 'Pending', icon: TrendingUp, path: '/orders/pending', badge: '12' },
-    //     { id: 'completed', title: 'Completed', icon: Shield, path: '/orders/completed' },
-    //     { id: 'returns', title: 'Returns', icon: CreditCard, path: '/orders/returns' }
-    //   ]
-    // },
-
-    
-    // {
-    //   id: 'reports',
-    //   title: 'Management',
-    //   icon: FileText,
-    //   children: [
-    //   ]
-    // }
-  ], []);
+  const menuItems = useMemo(
+    () => [
+      {
+        id: "dashboard",
+        title: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard",
+        badge: null,
+      },
+      {
+        id: "products",
+        title: "Products",
+        icon: Package,
+        path: "inventory/product-crud",
+      },
+      {
+        id: "categories",
+        title: "Categories",
+        icon: Grid3X3,
+        path: "/inventory/category-rdu",
+      },
+      {
+        id: "vendor",
+        title: "Vendor",
+        icon: Warehouse,
+        path: "/inventory/vendordetails",
+      },
+      {
+        id: "warehouse",
+        title: "Warehouse",
+        icon: Truck,
+        path: "/inventory/warehouse",
+      },
+      {
+        id: "measurement",
+        title: "Unit of Measurement ",
+        icon: TrendingUp,
+        path: "/reports/measurement",
+      },
+    ],
+    [],
+  );
 
   const bottomMenuItems = [
-
     {
-      id: 'settings',
-      title: 'Settings',
+      id: "settings",
+      title: "Settings",
       icon: Settings,
-      path: '/settings'
-    }
+      path: "/settings",
+    },
   ];
 
   const toggleExpanded = (menuId) => {
-    setExpandedMenus(prev => ({
+    setExpandedMenus((prev) => ({
       ...prev,
-      [menuId]: !prev[menuId]
+      [menuId]: !prev[menuId],
     }));
   };
 
-  // Update active menu from current route so direct navigation and refreshes highlight correctly
   useEffect(() => {
-    const pathname = location?.pathname || '/';
+    const pathname = location?.pathname || "/";
     let found = null;
     let parentFound = null;
 
@@ -133,7 +129,7 @@ const ProfessionalSidebar = () => {
     if (found) {
       setActiveMenu(found);
       if (parentFound) {
-        setExpandedMenus(prev => ({ ...prev, [parentFound]: true }));
+        setExpandedMenus((prev) => ({ ...prev, [parentFound]: true }));
       }
     }
   }, [location?.pathname]);
@@ -150,65 +146,64 @@ const ProfessionalSidebar = () => {
     const isActive = activeMenu === item.id;
     const isExpanded = expandedMenus[item.id];
     const hasChildren = item.children && item.children.length > 0;
-    const ItemComponent = item.path && !hasChildren ? Link : 'button';
+    const ItemComponent = item.path && !hasChildren ? Link : "button";
 
     return (
-      <li className={`${isChild ? 'ml-4' : ''}`}>
+      <li className={`${isChild ? "ml-4" : ""}`}>
         <ItemComponent
           {...(item.path && !hasChildren ? { to: item.path } : {})}
           onClick={() => handleMenuClick(item.id, hasChildren)}
           className={`
             group relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-200
-            ${isActive 
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+            ${
+              isActive
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
             }
-            ${isChild ? 'pl-6 text-gray-500 hover:text-gray-700' : ''}
+            ${isChild ? "pl-6 text-gray-500 hover:text-gray-700" : ""}
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
           `}
         >
-          {/* Active indicator */}
           {isActive && !isChild && (
             <div className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r bg-white"></div>
           )}
-          
-          {/* Icon */}
-          <item.icon className={`
+          <item.icon
+            className={`
             h-5 w-5 shrink-0 transition-colors duration-200
-            ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'}
-          `} />
-          
-          {/* Title (hidden when collapsed) */}
-          {!isCollapsed && <span className="flex-1 truncate">{item.title}</span>}
-          
-          {/* Badge */}
+            ${isActive ? "text-white" : "text-gray-500 group-hover:text-gray-700"}
+          `}
+          />
+          {!isCollapsed && (
+            <span className="flex-1 truncate">{item.title}</span>
+          )}
           {item.badge && !isCollapsed && (
-            <span className={`
+            <span
+              className={`
               inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium
-              ${item.badge === 'New' 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-red-100 text-red-700'
+              ${
+                item.badge === "New"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
               }
-              ${isActive ? 'bg-white/30 text-white' : ''}
-            `}>
+              ${isActive ? "bg-white/30 text-white" : ""}
+            `}
+            >
               {item.badge}
             </span>
           )}
-          
-          {/* Chevron for expandable items */}
           {hasChildren && !isCollapsed && (
-            <ChevronDown className={`
+            <ChevronDown
+              className={`
               h-4 w-4 shrink-0 transition-transform duration-200
-              ${isExpanded ? 'rotate-180' : ''}
-              ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}
-            `} />
+              ${isExpanded ? "rotate-180" : ""}
+              ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}
+            `}
+            />
           )}
         </ItemComponent>
-        
-        {/* Submenu */}
         {hasChildren && isExpanded && !isCollapsed && (
           <ul className="mt-1 space-y-1 border-l-2 border-gray-100 pl-3">
-            {item.children.map(child => (
+            {item.children.map((child) => (
               <MenuItem key={child.id} item={child} isChild={true} />
             ))}
           </ul>
@@ -218,12 +213,14 @@ const ProfessionalSidebar = () => {
   };
 
   return (
-    <aside className={`
+    <aside
+      className={`
       fixed left-0 top-0 z-40 flex h-screen flex-col bg-white shadow-lg transition-all duration-300 ease-in-out
-      ${isCollapsed ? 'w-16' : 'w-64'}
+      ${isCollapsed ? "w-16" : "w-64"}
       border-r border-gray-200 overflow-hidden
       lg:w-64 lg:translate-x-0 // Always expanded on lg screens
-    `}>
+    `}
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -237,32 +234,33 @@ const ProfessionalSidebar = () => {
             </div>
           )}
         </div>
-        
+
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors lg:hidden"
         >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </button>
       </div>
-
-
-
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <ul className="space-y-1">
-          {menuItems.map(item => (
+          {menuItems.map((item) => (
             <MenuItem key={item.id} item={item} />
           ))}
         </ul>
-        
+
         {/* Divider */}
         <div className="my-4 border-t border-gray-200"></div>
-        
+
         {/* Bottom Menu Items */}
         <ul className="space-y-1">
-          {bottomMenuItems.map(item => (
+          {bottomMenuItems.map((item) => (
             <MenuItem key={item.id} item={item} />
           ))}
         </ul>
@@ -276,7 +274,9 @@ const ProfessionalSidebar = () => {
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">NDH Technology</p>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                NDH Technology
+              </p>
               <p className="text-xs text-gray-500 truncate">Administrator</p>
             </div>
           )}
@@ -291,4 +291,4 @@ const ProfessionalSidebar = () => {
   );
 };
 
-export default ProfessionalSidebar; 
+export default ProfessionalSidebar;

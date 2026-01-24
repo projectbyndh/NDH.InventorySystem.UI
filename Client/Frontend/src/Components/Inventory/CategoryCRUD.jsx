@@ -1,74 +1,52 @@
-// src/Components/Inventory/CategoryCRUD.jsx
-import React, { useEffect, useMemo, useState } from "react";
+// src/components/Inventory/CategoryCRUD.jsx
+import React from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  Edit,
+  Plus,
+  Edit2,
   Trash2,
   Search,
   ChevronLeft,
   ChevronRight,
-  X,
-  Image as ImageIcon,
-  Package,
-  Barcode,
-  Calendar,
-  Clock,
-  Filter,
-  RefreshCw,
-  CheckCircle,
-  XCircle,
   AlertCircle,
+  CheckCircle,
+  Image as ImageIcon,
 } from "lucide-react";
-import toast from "../UI/toast";
-import { handleError } from "../UI/errorHandler";
-
 import useCategoryStore from "../Store/Categorystore";
-import CategoryForm from "./AddCategory";
-import useLoginStore from "../Store/Loginstore";
-import Modal from "../UI/Modal";
-import ConfirmModal from "../UI/ConfirmModal";
-import TableWrapper from "../UI/TableWrapper";
-import EmptyState from "../UI/EmptyState";
 import Spinner from "../UI/Spinner";
-import SearchInput from "../UI/SearchInput";
-import Pagination from "../UI/Pagination";
-
-
-// Using shared Modal component from ../UI/Modal
-
+import { handleError } from "../UI/errorHandler";
 
 export default function CategoryCRUD() {
   const {
     categories,
-    total,
-    loading,
-    error,
     fetchCategories,
+    createCategory,
     updateCategory,
     deleteCategory,
+    loading: storeLoading,
   } = useCategoryStore();
 
-  const { logout } = useLoginStore();
-
+  // List mode states
   const [search, setSearch] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCat, setEditingCat] = useState(null); // full object with id
-  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: "" });
   const [page, setPage] = useState(1);
-  const pageSize = 15;
+  const pageSize = 10;
 
-  
+  // Form mode states
+  const [mode, setMode] = useState("list"); // "list" | "form"
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [form, setForm] = useState({ name: "", description: "" });
+  const [errors, setErrors] = useState({});
+  const [formLoading, setFormLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // Delete modal
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: "" });
+
   useEffect(() => {
     fetchCategories({ pageNumber: page, pageSize });
   }, [page, fetchCategories]);
 
-  
-  const filtered = useMemo(() => {
+  const filteredCategories = useMemo(() => {
     if (!search.trim()) return categories;
     const term = search.toLowerCase();
     return categories.filter(
@@ -79,349 +57,380 @@ export default function CategoryCRUD() {
     );
   }, [categories, search]);
 
-  
-  const columns = useMemo(
-    () => [
-      {
-        accessorKey: "imageUrl",
-        header: "Image",
-        cell: ({ row }) => {
-          const url = row.original.imageUrl;
-          return url ? (
-            <img
-              src={url}
-              alt={row.original.name}
-              className="h-10 w-10 rounded-md object-cover border border-slate-200"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
-              <ImageIcon className="h-5 w-5 text-slate-400" />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "name",
-        header: "Name",
-        cell: ({ row }) => (
-          <div className="font-semibold text-slate-900">{row.original.name}</div>
-        ),
-      },
-      {
-        accessorKey: "code",
-        header: "Code",
-        cell: ({ row }) => (
-          <code className="text-xs font-mono bg-slate-100 px-2 py-1 rounded">
-            {row.original.code || "—"}
-          </code>
-        ),
-      },
-      {
-        accessorKey: "parentCategoryId",
-        header: "Parent",
-        cell: ({ row }) => {
-          const parent = categories.find((c) => c.id === row.original.parentCategoryId);
-          return <span className="text-sm text-slate-600">{parent?.name || "—"}</span>;
-        },
-      },
-      {
-        id: "variants",
-        header: "Variants",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            {row.original.hasVariants ? (
-              <>
-                <Package className="h-4 w-4 text-emerald-600" />
-                <span className="text-xs text-emerald-700">Yes</span>
-              </>
-            ) : (
-              <span className="text-xs text-slate-400">No</span>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: "serial",
-        header: "Serial",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            {row.original.requiresSerialNumbers ? (
-              <>
-                <Barcode className="h-4 w-4 text-amber-600" />
-                <span className="text-xs text-amber-700">Yes</span>
-              </>
-            ) : (
-              <span className="text-xs text-slate-400">No</span>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: "expiry",
-        header: "Expiry",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            {row.original.trackExpiration ? (
-              <>
-                <Calendar className="h-4 w-4 text-rose-600" />
-                <span className="text-xs text-rose-700">Yes</span>
-              </>
-            ) : (
-              <span className="text-xs text-slate-400">No</span>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: "created",
-        header: "Created",
-        cell: ({ row }) => {
-          const d = row.original.createdAt ? new Date(row.original.createdAt) : null;
-          return d ? (
-            <div className="flex items-center gap-1 text-xs text-slate-500">
-              <Clock className="h-3 w-3" />
-              {d.toLocaleDateString()}
-            </div>
-          ) : (
-            "—"
-          );
-        },
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => openEdit(row.original)}
-              className="p-1.5 rounded-md text-sky-600 hover:bg-sky-50 transition-colors"
-              title="Edit"
-            >
-              <Edit className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => openDelete(row.original.id, row.original.name)}
-              className="p-1.5 rounded-md text-red-600 hover:bg-red-50 transition-colors"
-              title="Delete"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [categories]
+  const totalPages = Math.ceil(filteredCategories.length / pageSize);
+  const paginatedCategories = filteredCategories.slice(
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
-  const table = useReactTable({
-    data: filtered,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true,
-    pageCount: Math.ceil(total / pageSize),
-    state: { pagination: { pageIndex: page - 1, pageSize } },
-    onPaginationChange: (updater) => {
-      const newState =
-        typeof updater === "function"
-          ? updater({ pageIndex: page - 1, pageSize })
-          : updater;
-      setPage(newState.pageIndex + 1);
-    },
-  });
+  // ──────────────────────────────────────────────
+  // Form handlers
+  // ──────────────────────────────────────────────
 
-  
-  const openEdit = (cat) => {
-    setEditingCat(cat); // full object with id
-    setModalOpen(true);
+  const startCreate = () => {
+    setMode("form");
+    setEditingCategory(null);
+    setForm({ name: "", description: "" });
+    setErrors({});
+    setSuccess(false);
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
-    setEditingCat(null);
+  const startEdit = (category) => {
+    setMode("form");
+    setEditingCategory(category);
+    setForm({
+      name: category.name,
+      description: category.description || "",
+    });
+    setErrors({});
+    setSuccess(false);
   };
 
-  const openDelete = (id, name) => {
+  const cancelForm = () => {
+    setMode("list");
+    setEditingCategory(null);
+    setForm({ name: "", description: "" });
+    setErrors({});
+  };
+
+  const validateForm = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = "Category name is required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleFormChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setFormLoading(true);
+    setSuccess(false);
+
+    try {
+      const payload = {
+        name: form.name.trim(),
+        description: form.description.trim() || undefined,
+      };
+
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, payload);
+      } else {
+        await createCategory(payload);
+      }
+
+      setSuccess(true);
+      await fetchCategories({ pageNumber: 1, pageSize });
+      setTimeout(() => {
+        cancelForm();
+      }, 1200);
+    } catch (err) {
+      handleError(err, { title: "Save failed" });
+      setErrors({ submit: err?.response?.data?.message || "Failed to save category" });
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // ──────────────────────────────────────────────
+  // Delete handlers
+  // ──────────────────────────────────────────────
+
+  const openDeleteModal = (id, name) => {
     setDeleteModal({ open: true, id, name });
   };
-  const closeDelete = () => {
+
+  const closeDeleteModal = () => {
     setDeleteModal({ open: false, id: null, name: "" });
   };
 
-  
-  const handleSaved = async (formData) => {
-    if (!editingCat?.id) return;
-
+  const confirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      await updateCategory(editingCat.id, formData);
-      toast.success("Category updated!", { icon: <CheckCircle className="h-5 w-5" /> });
-      closeModal();
-      fetchCategories({ pageNumber: page, pageSize });
+      await deleteCategory(deleteModal.id);
+      await fetchCategories({ pageNumber: page, pageSize });
+      closeDeleteModal();
     } catch (err) {
-      if (err?.response?.status === 401) {
-        logout();
-        window.location.href = "/login";
-      } else {
-        handleError(err, { title: "Failed to update" });
-        toast.error("Failed to update.", { icon: <XCircle className="h-5 w-5" /> });
-      }
+      handleError(err, { title: "Delete failed" });
     }
   };
 
-  
-  const handleDeleteConfirm = async () => {
-    const id = deleteModal.id;
-    closeDelete();
+  // ──────────────────────────────────────────────
+  // Render
+  // ──────────────────────────────────────────────
 
-    const toastId = toast.loading("Deleting...");
+  if (mode === "form") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8 flex items-center gap-4">
+            <button
+              onClick={cancelForm}
+              className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all"
+              aria-label="Back to list"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-600" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">
+                {editingCategory ? "Edit Category" : "Add New Category"}
+              </h1>
+              <p className="text-slate-600 mt-1">
+                {editingCategory ? "Update category details" : "Create a new product category"}
+              </p>
+            </div>
+          </div>
 
-    try {
-      // suppress server-sent toast because this component already shows
-      // a loading -> success update using the toast proxy
-      await deleteCategory(id, { showToast: false });
-      toast.success("Deleted!", { id: toastId, icon: <CheckCircle className="h-5 w-5" /> });
-
-      if (filtered.length === 1 && page > 1) {
-        setPage((p) => p - 1);
-      } else {
-        fetchCategories({ pageNumber: page, pageSize });
-      }
-    } catch (err) {
-      if (err?.response?.status === 401) {
-        logout();
-        window.location.href = "/login";
-      } else {
-        handleError(err, { title: "Delete failed" });
-        toast.error("Delete failed.", { id: toastId, icon: <XCircle className="h-5 w-5" /> });
-      }
-    }
-  };
-
-  
-  return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-8">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Categories</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            View and manage existing product categories.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => fetchCategories({ pageNumber: page, pageSize })}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* SEARCH + FILTER */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search name, code, description..." />
-
-        <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-          <Filter className="h-4 w-4" />
-          Filters
-        </button>
-      </div>
-
-      {/* LOADING / ERROR */}
-      {loading && (
-        <div className="flex flex-col items-center py-16 text-slate-500">
-          <Spinner className="h-12 w-12 mb-4" />
-          <p>Loading categories...</p>
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="p-5 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 flex-shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {/* TABLE + PAGINATION */}
-      {!loading && !error && (
-        <>
-          <TableWrapper>
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id}>
-                    {hg.headers.map((h) => (
-                      <th
-                        key={h.id}
-                        className="px-5 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
-                      >
-                        {flexRender(h.column.columnDef.header, h.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-slate-50 transition-colors duration-150"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-5 py-4 text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </TableWrapper>
-
-          {table.getRowModel().rows.length === 0 && (
-            <EmptyState icon={<Package className="h-8 w-8 text-slate-400" />} title="No categories found." subtitle="Try adjusting your search." />
-          )}
-
-          {total > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-slate-600">
-              <div>
-                Showing <strong>{(page - 1) * pageSize + 1}</strong> to{" "}
-                <strong>{Math.min(page * pageSize, total)}</strong> of <strong>{total}</strong> results
-              </div>
-              <div className="flex items-center gap-2">
-                <Pagination page={page} pageCount={Math.ceil(total / pageSize)} onPrev={() => table.previousPage()} onNext={() => table.nextPage()} />
-              </div>
+          {success && (
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">Saved successfully!</span>
             </div>
           )}
-        </>
+
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <form onSubmit={handleSubmit} className="space-y-7">
+              {/* Name */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold text-slate-800 mb-2">
+                  Category Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => handleFormChange("name", e.target.value)}
+                  placeholder="e.g. Electronics, Clothing, Food"
+                  className={`w-full px-4 py-3 rounded-xl border text-base transition-all focus:outline-none focus:ring-2 focus:ring-slate-500 ${
+                    errors.name ? "border-red-500" : "border-slate-300"
+                  }`}
+                />
+                {errors.name && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-semibold text-slate-800 mb-2">
+                  Description <span className="text-slate-400 text-xs">(optional)</span>
+                </label>
+                <textarea
+                  id="description"
+                  value={form.description}
+                  onChange={(e) => handleFormChange("description", e.target.value)}
+                  rows={4}
+                  placeholder="Brief description of this category..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none"
+                />
+              </div>
+
+              {errors.submit && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                  {errors.submit}
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="flex-1 bg-slate-900 text-white py-3.5 rounded-xl font-semibold hover:bg-black disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md"
+                >
+                  {formLoading ? (
+                    <>
+                      <Spinner className="w-5 h-5" />
+                      Saving...
+                    </>
+                  ) : editingCategory ? (
+                    "Update Category"
+                  ) : (
+                    "Create Category"
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={cancelForm}
+                  disabled={formLoading}
+                  className="flex-1 border border-slate-300 text-slate-700 py-3.5 rounded-xl font-semibold hover:bg-slate-50 disabled:opacity-50 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // List view
+  // ──────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Categories</h1>
+            <p className="text-slate-600 mt-1">Manage product categories</p>
+          </div>
+          <button
+            onClick={startCreate}
+            className="bg-slate-900 text-white px-5 py-3 rounded-xl font-medium hover:bg-black transition-all flex items-center gap-2 shadow-md"
+          >
+            <Plus className="w-5 h-5" />
+            Add Category
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-lg">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by name, code or description..."
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-500"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {storeLoading ? (
+            <div className="p-16 flex flex-col items-center justify-center text-slate-500">
+              <Spinner className="w-12 h-12 mb-4" />
+              <p>Loading categories...</p>
+            </div>
+          ) : paginatedCategories.length === 0 ? (
+            <div className="p-12 text-center text-slate-500">
+              <p>No categories found.</p>
+              <button
+                onClick={startCreate}
+                className="mt-4 text-slate-900 font-medium hover:underline"
+              >
+                Create your first category
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="text-left px-6 py-4 font-semibold text-slate-700">Name</th>
+                    <th className="text-left px-6 py-4 font-semibold text-slate-700">Description</th>
+                    <th className="text-right px-6 py-4 font-semibold text-slate-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedCategories.map((cat) => (
+                    <tr
+                      key={cat.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 font-medium text-slate-900">{cat.name}</td>
+                      <td className="px-6 py-4 text-slate-600 max-w-md truncate">
+                        {cat.description || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => startEdit(cat)}
+                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                            aria-label="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(cat.id, cat.name)}
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex justify-center items-center gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-2 rounded-lg hover:bg-white disabled:opacity-50"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-600" />
+            </button>
+            <span className="text-sm text-slate-600">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="p-2 rounded-lg hover:bg-white disabled:opacity-50"
+            >
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="p-3 bg-red-50 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Delete Category?</h3>
+            </div>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete <strong>{deleteModal.name}</strong>?<br />
+              This action <span className="text-red-600 font-medium">cannot be undone</span>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {formLoading ? <Spinner className="w-5 h-5" /> : null}
+                Delete
+              </button>
+              <button
+                onClick={closeDeleteModal}
+                className="flex-1 border border-slate-300 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-
-      {/* EDIT MODAL */}
-      <Modal
-        open={modalOpen}
-        onClose={closeModal}
-        title={`Edit Category (ID: ${editingCat?.id || ""})`}
-      >
-        <CategoryForm
-          initial={editingCat}
-          onSaved={handleSaved}
-          onCancel={closeModal}
-        />
-      </Modal>
-
-      {/* DELETE CONFIRM MODAL */}
-      <ConfirmModal
-        open={deleteModal.open}
-        onClose={closeDelete}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Category?"
-        message={<span>Are you sure you want to delete <strong>{deleteModal.name}</strong>? This action cannot be undone.</span>}
-        confirmText="Delete"
-      />
     </div>
   );
 }
