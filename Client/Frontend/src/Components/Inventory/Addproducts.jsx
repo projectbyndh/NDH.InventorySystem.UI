@@ -42,7 +42,7 @@ export default function AddProduct() {
     quantityInStock: 0,
     minimumStockLevel: 0,
     reorderQuantity: 0,
-    categoryId: 0,
+    categoryId: "",               // empty = not selected → will send 0
     subCategoryId: null,
     unitOfMeasureId: null,
     primaryVendorId: null,
@@ -84,7 +84,7 @@ export default function AddProduct() {
           const p = await fetchProductById(parseInt(id));
           setForm({
             ...p,
-            categoryId: p.categoryId || 0,
+            categoryId: p.categoryId ?? "",
             subCategoryId: p.subCategoryId ?? null,
             unitOfMeasureId: p.unitOfMeasureId ?? null,
             primaryVendorId: p.primaryVendorId ?? null,
@@ -110,7 +110,6 @@ export default function AddProduct() {
     }
   }, [id, isEdit, fetchProductById, navigate]);
 
-  // Handlers
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -125,7 +124,10 @@ export default function AddProduct() {
   const addVariant = () => {
     setForm((prev) => ({
       ...prev,
-      variants: [...prev.variants, { name: "", sku: "", price: 0, stockQuantity: 0, attributesJson: "{}" }],
+      variants: [
+        ...prev.variants,
+        { name: "", sku: "", price: 0, stockQuantity: 0, attributesJson: "{}" },
+      ],
     }));
   };
 
@@ -156,18 +158,21 @@ export default function AddProduct() {
     }));
   };
 
-  // Validation
   const validate = () => {
     const e = {};
     if (!form.name?.trim()) e.name = "Name is required";
     if (!form.sku?.trim()) e.sku = "SKU is required";
     if (form.price <= 0) e.price = "Price must be greater than 0";
-    if (!form.categoryId || form.categoryId === 0) e.categoryId = "Please select a category";
+
+    // Category is mandatory
+    if (!form.categoryId || isNaN(Number(form.categoryId)) || Number(form.categoryId) <= 0) {
+      e.categoryId = "Please select a valid category";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -186,18 +191,23 @@ export default function AddProduct() {
         quantityInStock: parseInt(form.quantityInStock, 10) || 0,
         minimumStockLevel: parseInt(form.minimumStockLevel, 10) || 0,
         reorderQuantity: parseInt(form.reorderQuantity, 10) || 0,
-        categoryId: parseInt(form.categoryId, 10),
+
+        categoryId: form.categoryId && !isNaN(Number(form.categoryId))
+          ? Number(form.categoryId)
+          : 0,
+
+        subCategoryId: form.subCategoryId ? Number(form.subCategoryId) : 0,
+        unitOfMeasureId: form.unitOfMeasureId ? Number(form.unitOfMeasureId) : 0,
+        primaryVendorId: form.primaryVendorId ? Number(form.primaryVendorId) : 0,
         status: form.status,
         trackInventory: !!form.trackInventory,
         isSerialized: !!form.isSerialized,
         hasExpiry: !!form.hasExpiry,
-        subCategoryId: form.subCategoryId ?? null,
-        unitOfMeasureId: form.unitOfMeasureId ?? null,
-        primaryVendorId: form.primaryVendorId ?? null,
+        variantGroupId: form.variantGroupId?.trim() || null,
       };
 
-      const validVariants = form.variants
-        .filter((v) => v.sku?.trim() || v.name?.trim())
+      payload.variants = form.variants
+        .filter((v) => v.name?.trim() || v.sku?.trim())
         .map((v) => ({
           name: v.name?.trim() || null,
           sku: v.sku?.trim() || null,
@@ -205,16 +215,15 @@ export default function AddProduct() {
           stockQuantity: parseInt(v.stockQuantity, 10) || 0,
           attributesJson: v.attributesJson?.trim() || null,
         }));
-      payload.variants = validVariants.length > 0 ? validVariants : null;
 
-      const validAttrs = form.attributes
+      payload.attributes = form.attributes
         .filter((a) => a.name?.trim() && a.value?.trim())
-        .map((a) => ({ name: a.name.trim(), value: a.value.trim() }));
-      payload.attributes = validAttrs.length > 0 ? validAttrs : null;
+        .map((a) => ({
+          name: a.name.trim(),
+          value: a.value.trim(),
+        }));
 
-      if (validVariants.length > 0 && form.variantGroupId?.trim()) {
-        payload.variantGroupId = form.variantGroupId.trim();
-      }
+      console.log("Submitting product payload:", JSON.stringify(payload, null, 2));
 
       if (isEdit) {
         await updateProduct(parseInt(id), payload);
@@ -226,14 +235,31 @@ export default function AddProduct() {
       setTimeout(() => navigate("/inventory/product-crud"), 1500);
     } catch (err) {
       handleError(err, { title: "Failed to save product" });
-      const message = err?.response?.data?._message || "Failed to save product.";
-      setErrors({ submit: message });
+
+      const serverErrors = err?.response?.data?.errors;
+      if (serverErrors && typeof serverErrors === "object") {
+        const mapped = {};
+        Object.entries(serverErrors).forEach(([key, msgs]) => {
+          const k = key.toLowerCase();
+          const message = Array.isArray(msgs) ? msgs.join(" ") : String(msgs);
+          if (k === "sku") mapped.sku = message;
+          else if (k === "name") mapped.name = message;
+          else mapped[key] = message;
+        });
+        // show field errors inline and also a submit summary
+        setErrors((prev) => ({ ...prev, ...mapped, submit: Object.values(mapped).join(" ") }));
+      } else {
+        const message = err?.response?.data?._message || err?.message || "Failed to save product.";
+        setErrors({ submit: message });
+      }
+
+      // helpful console output for server-side debug
+      console.error("Save product error response:", err?.response?.data ?? err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Loading UI
   if (dataLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -261,7 +287,7 @@ export default function AddProduct() {
               <h1 className="text-3xl font-bold text-slate-900">
                 {isEdit ? "Edit Product" : "Add New Product"}
               </h1>
-              <p className="text-slate-600 mt-1">Complete all required fields to continue</p>
+              <p className="text-slate-600 mt-1">Complete all required fields</p>
             </div>
           </div>
           <Link
@@ -284,7 +310,7 @@ export default function AddProduct() {
           </div>
         )}
 
-        {/* Form Card */}
+        {/* Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Basic Information */}
@@ -294,12 +320,13 @@ export default function AddProduct() {
                 Basic Information
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
+                {/* Name */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                     <input
                       value={form.name}
                       onChange={(e) => handleChange("name", e.target.value)}
@@ -307,22 +334,23 @@ export default function AddProduct() {
                         errors.name ? "border-red-500" : "border-slate-300"
                       } focus:ring-2 focus:ring-sky-500 transition-shadow`}
                       placeholder="Enter product name"
+                      required
                     />
                   </div>
                   {errors.name && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.name}
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.name}
                     </p>
                   )}
                 </div>
 
+                {/* SKU */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     SKU <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                     <input
                       value={form.sku}
                       onChange={(e) => handleChange("sku", e.target.value)}
@@ -330,22 +358,23 @@ export default function AddProduct() {
                         errors.sku ? "border-red-500" : "border-slate-300"
                       } focus:ring-2 focus:ring-sky-500 transition-shadow`}
                       placeholder="e.g. PROD-001"
+                      required
                     />
                   </div>
                   {errors.sku && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.sku}
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.sku}
                     </p>
                   )}
                 </div>
 
+                {/* Price */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                     <input
                       type="number"
                       step="0.01"
@@ -355,20 +384,22 @@ export default function AddProduct() {
                         errors.price ? "border-red-500" : "border-slate-300"
                       } focus:ring-2 focus:ring-sky-500 transition-shadow`}
                       placeholder="0.00"
+                      required
+                      min="0.01"
                     />
                   </div>
                   {errors.price && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.price}
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.price}
                     </p>
                   )}
                 </div>
 
+                {/* Cost */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Cost</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                     <input
                       type="number"
                       step="0.01"
@@ -380,32 +411,51 @@ export default function AddProduct() {
                   </div>
                 </div>
 
+                {/* Category */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     Category <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={form.categoryId}
-                    onChange={(e) => handleChange("categoryId", parseInt(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      errors.categoryId ? "border-red-500" : "border-slate-300"
-                    } focus:ring-2 focus:ring-sky-500 transition-shadow`}
+                    value={form.categoryId ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleChange("categoryId", val === "" ? "" : Number(val));
+                    }}
+                    required
+                    className={`w-full px-4 py-3 rounded-xl border appearance-none ${
+                      errors.categoryId ? "border-red-500 ring-2 ring-red-200" : "border-slate-300"
+                    } focus:ring-2 focus:ring-sky-500 transition-shadow bg-white`}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                      backgroundPosition: "right 0.75rem center",
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "1.5em",
+                      paddingRight: "2.5rem",
+                    }}
                   >
-                    <option value={0}>Select Category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                    <option value="" disabled>
+                      Select a category *
+                    </option>
+                    {categories.length === 0 ? (
+                      <option disabled>Loading categories...</option>
+                    ) : (
+                      categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))
+                    )}
                   </select>
+
                   {errors.categoryId && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.categoryId}
+                    <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
+                      <AlertCircle size={16} /> {errors.categoryId}
                     </p>
                   )}
                 </div>
 
+                {/* Unit of Measure */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Unit of Measure</label>
                   <select
@@ -424,6 +474,7 @@ export default function AddProduct() {
                   </select>
                 </div>
 
+                {/* Primary Vendor */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Primary Vendor</label>
                   <select
@@ -442,6 +493,7 @@ export default function AddProduct() {
                   </select>
                 </div>
 
+                {/* Variant Group ID */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     Variant Group ID (optional)
@@ -544,6 +596,7 @@ export default function AddProduct() {
                   Add Variant
                 </button>
               </div>
+
               {form.variants.length === 0 ? (
                 <p className="text-slate-500 italic">No variants added yet.</p>
               ) : (
@@ -591,7 +644,7 @@ export default function AddProduct() {
                       </div>
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          Attributes JSON
+                          Attributes (JSON)
                         </label>
                         <textarea
                           value={v.attributesJson}
@@ -608,7 +661,7 @@ export default function AddProduct() {
               )}
             </section>
 
-            {/* Custom Attributes */}
+            {/* Attributes */}
             <section className="border-t pt-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -624,6 +677,7 @@ export default function AddProduct() {
                   Add Attribute
                 </button>
               </div>
+
               {form.attributes.length === 0 ? (
                 <p className="text-slate-500 italic">No custom attributes added.</p>
               ) : (
@@ -655,14 +709,15 @@ export default function AddProduct() {
               )}
             </section>
 
-            {/* Submit */}
+            {/* Error */}
             {errors.submit && (
-              <div className="p-5 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center gap-3 animate-shake">
+              <div className="p-5 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center gap-3">
                 <AlertCircle className="w-6 h-6 flex-shrink-0" />
                 {errors.submit}
               </div>
             )}
 
+            {/* Submit Buttons */}
             <div className="flex gap-4 pt-8 border-t">
               <button
                 type="submit"
@@ -678,6 +733,7 @@ export default function AddProduct() {
                   </>
                 )}
               </button>
+
               <button
                 type="button"
                 onClick={() => navigate(-1)}

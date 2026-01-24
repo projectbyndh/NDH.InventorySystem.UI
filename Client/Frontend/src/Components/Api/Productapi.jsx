@@ -9,13 +9,7 @@ const unwrap = (res) => {
   return body;
 };
 
-const clean = (obj) => {
-  Object.keys(obj).forEach((k) => obj[k] == null && delete obj[k]);
-  return obj;
-};
-
 const ProductService = {
-  // GET /api/Product/get-all
   getAll: async ({ pageNumber = 1, pageSize = 20 } = {}) => {
     const res = await axiosInstance.get("/Product/get-all", {
       params: { PageNumber: pageNumber, PageSize: pageSize },
@@ -23,89 +17,127 @@ const ProductService = {
     return unwrap(res);
   },
 
-  getById: (id) => axiosInstance.get(`/Product/get-by-id/${id}`).then(unwrap),
-
-  create: (payload) => {
-    const body = clean({
-      name: payload.name?.trim(),
-      description: payload.description?.trim() || null,
-      sku: payload.sku?.trim(),
-      price: Number(payload.price) || 0,
-      cost: Number(payload.cost) || 0,
-      quantityInStock: Number(payload.quantityInStock) || 0,
-      minimumStockLevel: Number(payload.minimumStockLevel) || 0,
-      reorderQuantity: Number(payload.reorderQuantity) || 0,
-      categoryId: Number(payload.categoryId) || 0,
-      subCategoryId: payload.subCategoryId ?? null,
-      unitOfMeasureId: payload.unitOfMeasureId ?? null,
-      primaryVendorId: payload.primaryVendorId ?? null,
-      status: payload.status || "Active",
-      trackInventory: !!payload.trackInventory,
-      isSerialized: !!payload.isSerialized,
-      hasExpiry: !!payload.hasExpiry,
-      variantGroupId: payload.variantGroupId?.trim() || null,
-      variants: (payload.variants ?? [])
-        .map((v) => clean({
-          name: v.name?.trim() || null,
-          sku: v.sku?.trim() || null,
-          price: Number(v.price) || 0,
-          stockQuantity: Number(v.stockQuantity) || 0,
-          attributesJson: v.attributesJson?.trim() || null,
-        }))
-        .filter((v) => v.name || v.sku),
-      attributes: (payload.attributes ?? [])
-        .map((a) => clean({
-          name: a.name?.trim() || null,
-          value: a.value?.trim() || null,
-        }))
-        .filter((a) => a.name && a.value),
-    });
-
-    return axiosInstance.post("/Product/create", body).then(unwrap);
+  getById: async (id) => {
+    const res = await axiosInstance.get(`/Product/get-by-id/${id}`);
+    return unwrap(res);
   },
 
-  update: (id, payload) => {
-    const body = clean({
-      name: payload.name?.trim(),
-      description: payload.description?.trim() || null,
-      sku: payload.sku?.trim(),
-      price: Number(payload.price) || 0,
-      cost: Number(payload.cost) || 0,
-      quantityInStock: Number(payload.quantityInStock) || 0,
-      minimumStockLevel: Number(payload.minimumStockLevel) || 0,
-      reorderQuantity: Number(payload.reorderQuantity) || 0,
-      categoryId: Number(payload.categoryId) || 0,
-      subCategoryId: payload.subCategoryId ?? null,
-      unitOfMeasureId: payload.unitOfMeasureId ?? null,
-      primaryVendorId: payload.primaryVendorId ?? null,
-      status: payload.status || "Active",
-      trackInventory: !!payload.trackInventory,
-      isSerialized: !!payload.isSerialized,
-      hasExpiry: !!payload.hasExpiry,
-      variantGroupId: payload.variantGroupId?.trim() || null,
-      variants: (payload.variants ?? [])
-        .map((v) => clean({
-          id: Number(v.id) || 0,
-          name: v.name?.trim() || null,
-          sku: v.sku?.trim() || null,
-          price: Number(v.price) || 0,
-          stockQuantity: Number(v.stockQuantity) || 0,
-          attributesJson: v.attributesJson?.trim() || null,
-        }))
-        .filter((v) => v.name || v.sku),
-      attributes: (payload.attributes ?? [])
-        .map((a) => clean({
-          id: Number(a.id) || 0,
-          name: a.name?.trim() || null,
-          value: a.value?.trim() || null,
-        }))
-        .filter((a) => a.name && a.value),
-    });
+  create: async (payload) => {
+    const dto = {
+      Name: (payload.name || "").trim() || null,
+      Description: payload.description?.trim() ?? null,
+      SKU: payload.sku?.trim() ?? null,
+      Price: Number(payload.price) || 0,
+      Cost: Number(payload.cost) || 0,
+      QuantityInStock: Number(payload.quantityInStock) || 0,
+      MinimumStockLevel: Number(payload.minimumStockLevel) || 0,
+      ReorderQuantity: Number(payload.reorderQuantity) || 0,
 
-    return axiosInstance.put(`/Product/update/${id}`, body).then(unwrap);
+      CategoryId: payload.categoryId && !isNaN(Number(payload.categoryId)) && Number(payload.categoryId) > 0
+        ? Number(payload.categoryId)
+        : 0,
+
+      SubCategoryId: payload.subCategoryId != null && !isNaN(Number(payload.subCategoryId))
+        ? Number(payload.subCategoryId)
+        : 0,
+
+      UnitOfMeasureId: payload.unitOfMeasureId != null && !isNaN(Number(payload.unitOfMeasureId))
+        ? Number(payload.unitOfMeasureId)
+        : 0,
+
+      PrimaryVendorId: payload.primaryVendorId != null && !isNaN(Number(payload.primaryVendorId))
+        ? Number(payload.primaryVendorId)
+        : 0,
+
+      Status: payload.status?.trim() || "Active",
+      TrackInventory: !!payload.trackInventory,
+      IsSerialized: !!payload.isSerialized,
+      HasExpiry: !!payload.hasExpiry,
+      VariantGroupId: payload.variantGroupId?.trim() ?? null,
+
+      Variants: (payload.variants ?? []).map((v) => ({
+        Name: v.name?.trim() ?? null,
+        SKU: v.sku?.trim() ?? null,
+        Price: Number(v.price) || 0,
+        StockQuantity: Number(v.stockQuantity) || 0,
+        AttributesJson: v.attributesJson?.trim() ?? null,
+      })).filter((v) => v.Name || v.SKU),
+
+      Attributes: (payload.attributes ?? []).map((a) => ({
+        Name: a.name?.trim() ?? null,
+        Value: a.value?.trim() ?? null,
+      })).filter((a) => a.Name && a.Value),
+    };
+
+    const body = { dto };
+
+    console.log("Creating product – final payload (lowercase):", JSON.stringify(body, null, 2));
+
+    const res = await axiosInstance.post("/Product/create", body);
+    return unwrap(res);
   },
 
-  remove: (id) => axiosInstance.delete(`/Product/delete/${id}`).then(unwrap),
+  update: async (id, payload) => {
+    const dto = {
+      Name: (payload.name || "").trim() || null,
+      Description: payload.description?.trim() ?? null,
+      SKU: payload.sku?.trim() ?? null,
+      Price: Number(payload.price) || 0,
+      Cost: Number(payload.cost) || 0,
+      QuantityInStock: Number(payload.quantityInStock) || 0,
+      MinimumStockLevel: Number(payload.minimumStockLevel) || 0,
+      ReorderQuantity: Number(payload.reorderQuantity) || 0,
+
+      CategoryId: payload.categoryId && !isNaN(Number(payload.categoryId)) && Number(payload.categoryId) > 0
+        ? Number(payload.categoryId)
+        : 0,
+
+      SubCategoryId: payload.subCategoryId != null && !isNaN(Number(payload.subCategoryId))
+        ? Number(payload.subCategoryId)
+        : 0,
+
+      UnitOfMeasureId: payload.unitOfMeasureId != null && !isNaN(Number(payload.unitOfMeasureId))
+        ? Number(payload.unitOfMeasureId)
+        : 0,
+
+      PrimaryVendorId: payload.primaryVendorId != null && !isNaN(Number(payload.primaryVendorId))
+        ? Number(payload.primaryVendorId)
+        : 0,
+
+      Status: payload.status?.trim() || "Active",
+      TrackInventory: !!payload.trackInventory,
+      IsSerialized: !!payload.isSerialized,
+      HasExpiry: !!payload.hasExpiry,
+      VariantGroupId: payload.variantGroupId?.trim() ?? null,
+
+      Variants: (payload.variants ?? []).map((v) => ({
+        Id: v.id != null ? Number(v.id) : undefined,
+        Name: v.name?.trim() ?? null,
+        SKU: v.sku?.trim() ?? null,
+        Price: Number(v.price) || 0,
+        StockQuantity: Number(v.stockQuantity) || 0,
+        AttributesJson: v.attributesJson?.trim() ?? null,
+      })).filter((v) => v.Name || v.SKU),
+
+      Attributes: (payload.attributes ?? []).map((a) => ({
+        Id: a.id != null ? Number(a.id) : undefined,
+        Name: a.name?.trim() ?? null,
+        Value: a.value?.trim() ?? null,
+      })).filter((a) => a.Name && a.Value),
+    };
+
+    const body = { dto };
+
+    console.log(`Updating product ${id} – final payload (PascalCase):`, JSON.stringify(body, null, 2));
+
+    const res = await axiosInstance.put(`/Product/update/${id}`, body);
+    return unwrap(res);
+  },
+
+  remove: async (id) => {
+    const res = await axiosInstance.delete(`/Product/delete/${id}`);
+    return unwrap(res);
+  },
 };
 
 export default ProductService;

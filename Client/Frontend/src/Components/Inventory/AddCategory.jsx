@@ -1,133 +1,129 @@
 // src/components/Inventory/CategoryForm.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import CategoryService from "../Api/Categoryapi";
-import useUnitOfMeasureStore from "../Store/Unitofmeasurement";
 import { Link } from "react-router-dom";
 import {
   Package,
   Hash,
   FileText,
   Image as ImageIcon,
-  ChevronDown,
   AlertCircle,
   CheckCircle,
   X,
-  Layers,
+  Upload,
   Settings,
   Tag,
 } from "lucide-react";
+import CategoryService from "../Api/Categoryapi";
+import useUnitOfMeasureStore from "../Store/Unitofmeasurement";
 import Spinner from "../UI/Spinner";
-import { handleError } from "../UI/errorHandler";
 
 const required = <span className="text-red-500">*</span>;
 
-export default function CategoryForm({ initial, onSaved, onCancel }) {
+export default function CategoryForm({ initial = {}, onSaved, onCancel }) {
+  const isEditing = !!initial?.id || !!initial?.categoryId;
   const editingId = initial?.id ?? initial?.categoryId;
 
   const { units = [], fetchUnits, loading: unitsLoading } = useUnitOfMeasureStore();
 
-  const [name, setName] = useState(initial?.name ?? "");
-  const [code, setCode] = useState(initial?.code ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
-  const [preview, setPreview] = useState(initial?.imageUrl ?? "");
+  // ── Form state ───────────────────────────────────────────────────────────────
+  const [name, setName]                 = useState(initial.name ?? "");
+  const [code, setCode]                 = useState(initial.code ?? "");
+  const [description, setDescription]   = useState(initial.description ?? "");
+  const [imageUrl, setImageUrl]         = useState(initial.imageUrl ?? "");
+  const [preview, setPreview]           = useState(initial.imageUrl ?? "");
   const [parentCategoryId, setParentCategoryId] = useState(
-    initial?.parentCategoryId == null ? "0" : String(initial.parentCategoryId)
+    initial.parentCategoryId != null ? String(initial.parentCategoryId) : ""
   );
-  const [hasVariants, setHasVariants] = useState(!!initial?.hasVariants);
-  const [requiresSerialNumbers, setRequiresSerialNumbers] = useState(!!initial?.requiresSerialNumbers);
-  const [trackExpiration, setTrackExpiration] = useState(!!initial?.trackExpiration);
-  const [defaultUnitOfMeasure, setDefaultUnitOfMeasure] = useState(initial?.defaultUnitOfMeasure ?? "");
-  const [taxonomyPath, setTaxonomyPath] = useState(initial?.taxonomyPath ?? "");
+  const [hasVariants, setHasVariants]   = useState(!!initial.hasVariants);
+  const [requiresSerialNumbers, setRequiresSerialNumbers] = useState(
+    !!initial.requiresSerialNumbers
+  );
+  const [trackExpiration, setTrackExpiration] = useState(!!initial.trackExpiration);
+  const [defaultUnitOfMeasure, setDefaultUnitOfMeasure] = useState(
+    initial.defaultUnitOfMeasure ?? ""
+  );
+  const [taxonomyPath, setTaxonomyPath] = useState(initial.taxonomyPath ?? "");
   const [hierarchyLevel, setHierarchyLevel] = useState(
-    Number.isFinite(initial?.hierarchyLevel) ? Number(initial?.hierarchyLevel) : 1
+    Number.isFinite(initial.hierarchyLevel) ? Number(initial.hierarchyLevel) : 1
   );
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [parentOptions, setParentOptions] = useState([{ value: "0", label: "None (Top-level)" }]);
+  // ── UI state ─────────────────────────────────────────────────────────────────
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
+  const [success, setSuccess]           = useState(false);
+  const [parentOptions, setParentOptions] = useState([
+    { value: "", label: "None (Top-level / Root)" },
+  ]);
   const [loadingParents, setLoadingParents] = useState(true);
+
   const fileInputRef = useRef(null);
 
-  // Load Units
+  // ── Load units of measure ────────────────────────────────────────────────────
   useEffect(() => {
     fetchUnits?.({ pageNumber: 1, pageSize: 100 });
   }, [fetchUnits]);
 
-  // Unit Options
+  // ── Unit dropdown options ────────────────────────────────────────────────────
   const unitOptions = useMemo(() => {
     const opts = units
       .filter((u) => u?.id && u?.name)
       .map((u) => ({
         value: u.name,
-        label: `${u.name} (${u.symbol || ""})`.trim(),
+        label: `${u.name}${u.symbol ? ` (${u.symbol})` : ""}`.trim(),
       }));
     return [{ value: "", label: "None" }, ...opts];
   }, [units]);
 
-  // Load Parent Categories
+  // ── Load parent categories ───────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoadingParents(true);
       try {
-        const data = await CategoryService.getAll({ pageNumber: 1, pageSize: 100 });
-        if (!mounted) return;
-        const list = Array.isArray(data?.items)
-          ? data.items
-          : Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data)
-          ? data
-          : [];
-        const options = list
-          .filter((c) => c && (c.id || c.categoryId))
+        const res = await CategoryService.getAll({ pageNumber: 1, pageSize: 100 });
+        const items = res?.items ?? res?.data ?? res ?? [];
+
+        const options = items
+          .filter((c) => c?.id || c?.categoryId)
           .map((c) => ({
             value: String(c.id ?? c.categoryId),
-            label: c.name || `Category ${c.id ?? c.categoryId}`,
+            label: c.name || `Category #${c.id ?? c.categoryId}`,
           }));
-        setParentOptions([
-          { value: "0", label: "None (Top-level)" },
-          ...options,
-        ]);
-      } catch (e) {
+
         if (mounted) {
-          handleError(e, { title: "Failed to load parent categories" });
-          setError("Could not load parent categories.");
+          setParentOptions([{ value: "", label: "None (Top-level / Root)" }, ...options]);
         }
+      } catch {
+        if (mounted) setError("Could not load parent categories");
       } finally {
         if (mounted) setLoadingParents(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  // Image Handlers
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-  const onPickImage = async (e) => {
+  // ── Image handling ───────────────────────────────────────────────────────────
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      setError("Image must be < 2MB");
+      setError("Image must be smaller than 2 MB");
       return;
     }
+
     try {
-      const dataUrl = await fileToDataUrl(file);
-      setPreview(URL.createObjectURL(file));
+      const previewUrl = URL.createObjectURL(file);
+      setPreview(previewUrl);
+
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
       setImageUrl(dataUrl);
-    } catch (err) {
-      handleError(err, { title: "Failed to read image" });
-      setError("Failed to read image");
+    } catch {
+      setError("Failed to process image");
     }
   };
 
@@ -137,45 +133,37 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const onTypeImageUrl = (url) => {
-    setImageUrl(url);
-    setPreview(url || "");
-  };
-
-  // Validation
-  const validate = () => {
-    if (!name.trim()) return "Category name is required";
-    return null;
-  };
-
-  // Submit
-  const onSubmit = async (e) => {
+  // ── Submit ───────────────────────────────────────────────────────────────────
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+
+    if (!name.trim()) {
+      setError("Category name is required");
       return;
     }
+
     setLoading(true);
+
     try {
       const payload = {
         name: name.trim(),
         code: code.trim() || null,
         description: description.trim() || null,
-        imageUrl: imageUrl || null,
-        parentCategoryId: parentCategoryId === "0" ? null : Number(parentCategoryId),
+        imageUrl: imageUrl.trim() || null,
+        parentCategoryId: parentCategoryId ? Number(parentCategoryId) : null,
         hasVariants,
         requiresSerialNumbers,
         trackExpiration,
-        defaultUnitOfMeasure: defaultUnitOfMeasure || null,
+        defaultUnitOfMeasure: defaultUnitOfMeasure.trim() || null,
         taxonomyPath: taxonomyPath.trim() || null,
-        hierarchyLevel,
+        hierarchyLevel: Number(hierarchyLevel) || 1,
+        subCategories: null,   // explicitly null — matches your working Swagger example
       };
 
       let result;
-      if (editingId) {
+      if (isEditing) {
         result = await CategoryService.update(editingId, payload);
       } else {
         result = await CategoryService.create(payload);
@@ -183,14 +171,14 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
 
       setSuccess(true);
       onSaved?.(result);
-      setTimeout(() => setSuccess(false), 2000);
     } catch (err) {
-      handleError(err, { title: "Failed to save category" });
       const msg =
         err?.response?.data?._message ||
+        err?.response?.data?.message ||
         err?.response?.data?.title ||
+        err?.response?.data?.detail ||
         err?.message ||
-        "Failed to save category";
+        "Failed to save category. Check server logs.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -198,282 +186,297 @@ export default function CategoryForm({ initial, onSaved, onCancel }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-      <form onSubmit={onSubmit} className="space-y-10">
+    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-9">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+          <div className="flex items-center gap-4">
             <div className="p-3 bg-sky-50 rounded-xl">
               <Package className="w-6 h-6 text-sky-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                {editingId ? "Edit Category" : "Add New Category"}
+                {isEditing ? "Edit Category" : "Create Category"}
               </h1>
-              <p className="text-slate-600 text-sm">Fill in the details below</p>
+              <p className="text-slate-600 text-sm mt-0.5">
+                Fill in the category details
+              </p>
             </div>
           </div>
           <Link
             to="/inventory/category-rdu"
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <Tag className="w-4 h-4" />
-            View All Categories
+            View All
           </Link>
         </div>
 
         {success && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800 animate-fadeIn">
-            <CheckCircle className="w-5 h-5" />
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800">
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
             <span className="font-medium">Category saved successfully!</span>
           </div>
         )}
 
-        {/* Basic Info */}
+        {/* Basic Information */}
         <section>
-          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <Tag className="w-5 h-5 text-slate-600" />
             Basic Information
           </h2>
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Category Name {required}
               </label>
               <div className="relative">
-                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 transition-shadow"
-                  placeholder="e.g. Electronics"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                  placeholder="e.g. Beverages"
                   required
                 />
               </div>
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">Code</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Code (optional)</label>
               <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 <input
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 transition-shadow"
-                  placeholder="e.g. ELEC-001"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                  placeholder="e.g. BEV001"
                 />
               </div>
             </div>
           </div>
-        </section>
 
-        {/* Description */}
-        <section className="border-t pt-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-slate-600" />
-            Description
-          </h2>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 transition-shadow"
-            placeholder="Optional description..."
-          />
-        </section>
-
-        {/* Image */}
-        <section className="border-t pt-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-slate-600" />
-            Category Image
-          </h2>
-          <div className="flex items-start gap-6">
-            <div className="shrink-0">
-              {preview ? (
-                <div className="relative group">
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    className="h-24 w-24 rounded-xl object-cover border-2 border-slate-200 shadow-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <div className="h-24 w-24 rounded-xl bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
-                  <ImageIcon className="w-10 h-10 text-slate-400" />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 space-y-3">
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={onPickImage}
-                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
-                />
-                <p className="mt-1 text-xs text-slate-500">Max 2MB, JPG/PNG</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">or</span>
-                <input
-                  value={imageUrl}
-                  onChange={(e) => onTypeImageUrl(e.target.value)}
-                  placeholder="Paste image URL..."
-                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-            </div>
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Description (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none resize-y min-h-[100px]"
+              placeholder="All types of drinks including soft drinks, juices, and water."
+            />
           </div>
         </section>
 
-        {/* Hierarchy & Unit */}
-        <section className="border-t pt-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-slate-600" />
-            Hierarchy & Unit
+        {/* Advanced settings */}
+        <section className="pt-6 border-t border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-slate-600" />
+            Advanced Settings
           </h2>
-          <div className="grid md:grid-cols-2 gap-5">
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={hasVariants}
+                onChange={(e) => setHasVariants(e.target.checked)}
+                className="w-5 h-5 text-sky-600 rounded focus:ring-sky-500"
+              />
+              <span className="text-sm font-medium text-slate-700">Has Variants</span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={trackExpiration}
+                onChange={(e) => setTrackExpiration(e.target.checked)}
+                className="w-5 h-5 text-sky-600 rounded focus:ring-sky-500"
+              />
+              <span className="text-sm font-medium text-slate-700">Track Expiration</span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={requiresSerialNumbers}
+                onChange={(e) => setRequiresSerialNumbers(e.target.checked)}
+                className="w-5 h-5 text-sky-600 rounded focus:ring-sky-500"
+              />
+              <span className="text-sm font-medium text-slate-700">Requires Serial Numbers</span>
+            </label>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">Parent Category</label>
-              {loadingParents ? (
-                <div className="flex items-center gap-2 text-slate-500">
-                  <Spinner size={4} className="inline-block" />
-                  Loading...
-                </div>
-              ) : (
-                <select
-                  value={parentCategoryId}
-                  onChange={(e) => setParentCategoryId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
-                >
-                  {parentOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Default Unit of Measure
+              </label>
+              <select
+                value={defaultUnitOfMeasure}
+                onChange={(e) => setDefaultUnitOfMeasure(e.target.value)}
+                disabled={unitsLoading}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none bg-white"
+              >
+                {unitOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">Default Unit of Measure</label>
-              {unitsLoading ? (
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Spinner size={4} className="inline-block" />
-                    Loading units...
-                  </div>
-              ) : (
-                <select
-                  value={defaultUnitOfMeasure}
-                  onChange={(e) => setDefaultUnitOfMeasure(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
-                >
-                  {unitOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Parent Category
+              </label>
+              <select
+                value={parentCategoryId}
+                onChange={(e) => setParentCategoryId(e.target.value)}
+                disabled={loadingParents}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none bg-white"
+              >
+                {parentOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">Taxonomy Path</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Taxonomy Path (optional)
+              </label>
               <input
                 value={taxonomyPath}
                 onChange={(e) => setTaxonomyPath(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
-                placeholder="e.g. root/electronics/phones"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                placeholder="e.g. Food/Beverages"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">Hierarchy Level</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Hierarchy Level
+              </label>
               <input
                 type="number"
-                min="0"
+                min="1"
                 value={hierarchyLevel}
-                onChange={(e) => setHierarchyLevel(Number(e.target.value) || 0)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500"
+                onChange={(e) => setHierarchyLevel(Number(e.target.value))}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
               />
             </div>
           </div>
         </section>
 
-        {/* Settings */}
-        <section className="border-t pt-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-slate-600" />
-            Inventory Settings
+        {/* Image */}
+        <section className="pt-6 border-t border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-slate-600" />
+            Category Image (optional)
           </h2>
-          <div className="flex flex-wrap gap-6">
-            {[
-              { key: "hasVariants", label: "Has Variants" },
-              { key: "requiresSerialNumbers", label: "Requires Serial Numbers" },
-              { key: "trackExpiration", label: "Track Expiration" },
-            ].map((item) => (
-              <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+
+          <div className="flex flex-col sm:flex-row gap-6">
+            {/* Preview box */}
+            <div className="w-40 h-40 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+              {preview ? (
+                <>
+                  <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition"
+                  >
+                    <X size={16} />
+                  </button>
+                </>
+              ) : (
+                <div className="text-center text-slate-400">
+                  <Upload size={28} className="mx-auto mb-2" />
+                  <p className="text-xs">No image</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Upload Image (max 2MB)
+                </label>
                 <input
-                  type="checkbox"
-                  checked={
-                    item.key === "hasVariants"
-                      ? hasVariants
-                      : item.key === "requiresSerialNumbers"
-                      ? requiresSerialNumbers
-                      : trackExpiration
-                  }
-                  onChange={() => {
-                    if (item.key === "hasVariants") setHasVariants((v) => !v);
-                    else if (item.key === "requiresSerialNumbers") setRequiresSerialNumbers((v) => !v);
-                    else setTrackExpiration((v) => !v);
-                  }}
-                  className="w-5 h-5 text-sky-600 rounded focus:ring-sky-500"
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
                 />
-                <span className="text-slate-700 font-medium">{item.label}</span>
-              </label>
-            ))}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Or paste image URL
+                </label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setPreview(e.target.value.trim());
+                  }}
+                  placeholder="https://example.com/images/beverages.jpg"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Error */}
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700 animate-shake">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
         {/* Actions */}
-        <div className="flex gap-3 pt-6 border-t">
+        <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-slate-100">
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
           >
             {loading ? (
-              <Spinner className="w-5 h-5" />
+              <>
+                <Spinner className="w-5 h-5 animate-spin" />
+                Saving...
+              </>
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />
-                {editingId ? "Update Category" : "Create Category"}
+                {isEditing ? "Update Category" : "Create Category"}
               </>
             )}
           </button>
+
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3.5 border-2 border-slate-300 text-slate-700 rounded-xl font-bold text-base hover:bg-slate-50 transition-all"
+              disabled={loading}
+              className="px-10 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition disabled:opacity-60"
             >
               Cancel
             </button>
           )}
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-800">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Error</p>
+              <p className="text-sm mt-0.5">{error}</p>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

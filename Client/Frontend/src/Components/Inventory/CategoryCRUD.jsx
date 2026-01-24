@@ -34,7 +34,19 @@ export default function CategoryCRUD() {
   // Form mode states
   const [mode, setMode] = useState("list"); // "list" | "form"
   const [editingCategory, setEditingCategory] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({
+    name: "",
+    code: "",
+    description: "",
+    parentCategoryId: null,
+    hasVariants: false,
+    requiresSerialNumbers: false,
+    trackExpiration: false,
+    defaultUnitOfMeasure: "",
+    taxonomyPath: "",
+    hierarchyLevel: 1,
+    subCategories: null,
+  });
   const [errors, setErrors] = useState({});
   const [formLoading, setFormLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -63,6 +75,12 @@ export default function CategoryCRUD() {
     page * pageSize
   );
 
+  const parentOptions = useMemo(() => {
+    const base = [{ value: null, label: "None (Top-level)" }];
+    const opts = (categories || []).map((c) => ({ value: c.id, label: c.name }));
+    return [...base, ...opts];
+  }, [categories]);
+
   // ──────────────────────────────────────────────
   // Form handlers
   // ──────────────────────────────────────────────
@@ -70,7 +88,19 @@ export default function CategoryCRUD() {
   const startCreate = () => {
     setMode("form");
     setEditingCategory(null);
-    setForm({ name: "", description: "" });
+    setForm({
+      name: "",
+      code: "",
+      description: "",
+      parentCategoryId: null,
+      hasVariants: false,
+      requiresSerialNumbers: false,
+      trackExpiration: false,
+      defaultUnitOfMeasure: "",
+      taxonomyPath: "",
+      hierarchyLevel: 1,
+      subCategories: null,
+    });
     setErrors({});
     setSuccess(false);
   };
@@ -79,8 +109,17 @@ export default function CategoryCRUD() {
     setMode("form");
     setEditingCategory(category);
     setForm({
-      name: category.name,
+      name: category.name || "",
+      code: category.code || "",
       description: category.description || "",
+      parentCategoryId: category.parentCategoryId ?? null,
+      hasVariants: !!category.hasVariants,
+      requiresSerialNumbers: !!category.requiresSerialNumbers,
+      trackExpiration: !!category.trackExpiration,
+      defaultUnitOfMeasure: category.defaultUnitOfMeasure || "",
+      taxonomyPath: category.taxonomyPath || "",
+      hierarchyLevel: category.hierarchyLevel ?? 1,
+      subCategories: Array.isArray(category.subCategoryNames) ? category.subCategoryNames : null,
     });
     setErrors({});
     setSuccess(false);
@@ -89,7 +128,19 @@ export default function CategoryCRUD() {
   const cancelForm = () => {
     setMode("list");
     setEditingCategory(null);
-    setForm({ name: "", description: "" });
+    setForm({
+      name: "",
+      code: "",
+      description: "",
+      parentCategoryId: null,
+      hasVariants: false,
+      requiresSerialNumbers: false,
+      trackExpiration: false,
+      defaultUnitOfMeasure: "",
+      taxonomyPath: "",
+      hierarchyLevel: 1,
+      subCategories: null,
+    });
     setErrors({});
   };
 
@@ -115,7 +166,17 @@ export default function CategoryCRUD() {
     try {
       const payload = {
         name: form.name.trim(),
-        description: form.description.trim() || undefined,
+        code: form.code?.trim() || "",
+        description: form.description?.trim() || "",
+        imageUrl: form.imageUrl?.trim?.() || "",
+        parentCategoryId: form.parentCategoryId ? Number(form.parentCategoryId) : null,
+        hasVariants: !!form.hasVariants,
+        requiresSerialNumbers: !!form.requiresSerialNumbers,
+        trackExpiration: !!form.trackExpiration,
+        defaultUnitOfMeasure: form.defaultUnitOfMeasure?.trim() || "",
+        taxonomyPath: form.taxonomyPath?.trim() || "",
+        hierarchyLevel: Number(form.hierarchyLevel) || 1,
+        subCategories: form.subCategories && form.subCategories.length ? form.subCategories : null,
       };
 
       if (editingCategory) {
@@ -218,6 +279,21 @@ export default function CategoryCRUD() {
                 )}
               </div>
 
+              {/* Code */}
+              <div>
+                <label htmlFor="code" className="block text-sm font-semibold text-slate-800 mb-2">
+                  Code <span className="text-slate-400 text-xs">(optional)</span>
+                </label>
+                <input
+                  id="code"
+                  type="text"
+                  value={form.code}
+                  onChange={(e) => handleFormChange("code", e.target.value)}
+                  placeholder="e.g. BEV001"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                />
+              </div>
+
               {/* Description */}
               <div>
                 <label htmlFor="description" className="block text-sm font-semibold text-slate-800 mb-2">
@@ -231,6 +307,49 @@ export default function CategoryCRUD() {
                   placeholder="Brief description of this category..."
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none"
                 />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Parent Category <span className="text-slate-400 text-xs">(optional)</span></label>
+                  <select
+                    value={form.parentCategoryId ?? ""}
+                    onChange={(e) => handleFormChange("parentCategoryId", e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  >
+                    <option value="">None (Top-level)</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Flags <span className="text-slate-400 text-xs">(optional)</span></label>
+                  <div className="flex items-center gap-4">
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={!!form.hasVariants}
+                        onChange={(e) => handleFormChange("hasVariants", e.target.checked)}
+                        className="form-checkbox h-4 w-4"
+                      />
+                      <span>Has variants</span>
+                    </label>
+
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={!!form.trackExpiration}
+                        onChange={(e) => handleFormChange("trackExpiration", e.target.checked)}
+                        className="form-checkbox h-4 w-4"
+                      />
+                      <span>Track expiration</span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
               {errors.submit && (
@@ -335,7 +454,10 @@ export default function CategoryCRUD() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="text-left px-6 py-4 font-semibold text-slate-700">Name</th>
+                    <th className="text-left px-6 py-4 font-semibold text-slate-700">Code</th>
                     <th className="text-left px-6 py-4 font-semibold text-slate-700">Description</th>
+                    <th className="text-left px-6 py-4 font-semibold text-slate-700">Parent</th>
+                    <th className="text-left px-6 py-4 font-semibold text-slate-700">Subcategories</th>
                     <th className="text-right px-6 py-4 font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
@@ -346,9 +468,10 @@ export default function CategoryCRUD() {
                       className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                     >
                       <td className="px-6 py-4 font-medium text-slate-900">{cat.name}</td>
-                      <td className="px-6 py-4 text-slate-600 max-w-md truncate">
-                        {cat.description || "—"}
-                      </td>
+                      <td className="px-6 py-4 text-slate-600">{cat.code || "—"}</td>
+                      <td className="px-6 py-4 text-slate-600 max-w-md truncate">{cat.description || "—"}</td>
+                      <td className="px-6 py-4 text-slate-600">{cat.parentCategoryName || "—"}</td>
+                      <td className="px-6 py-4 text-slate-600">{(cat.subCategoryNames && cat.subCategoryNames.length) ? cat.subCategoryNames.join(", ") : "—"}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button

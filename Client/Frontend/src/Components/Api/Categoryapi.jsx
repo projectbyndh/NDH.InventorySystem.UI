@@ -1,17 +1,26 @@
-// src/Components/Api/Categoryapi.jsx
+// src/components/Api/Categoryapi.jsx
 import axiosInstance from "./AxiosInstance";
 
-const parse = (raw) => (typeof raw === "string" ? JSON.parse(raw) : raw);
+// Helper to normalize response (handles different wrapper patterns)
+const parseResponse = (res) => {
+  const raw = res?.data ?? res;
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  }
+  return raw;
+};
+
 const unwrap = (res) => {
-  const body = parse(res?.data ?? res);
+  const body = parseResponse(res);
   if (body && typeof body === "object") {
-    if ("_data" in body) return body._data;
-    if ("data" in body) return body.data;
+    return body._data ?? body.data ?? body;
   }
   return body;
 };
-
-// src/Components/Api/Categoryapi.jsx
 
 const CategoryService = {
   getAll: async (pagination = { pageNumber: 1, pageSize: 50 }) => {
@@ -24,68 +33,67 @@ const CategoryService = {
     return unwrap(res);
   },
 
-  getById: (id) => axiosInstance.get(`/Category/getById/${id}`).then(unwrap),
+  getById: async (id) => {
+    const res = await axiosInstance.get(`/Category/getById/${id}`);
+    return unwrap(res);
+  },
 
-  // 🟢 FIX HERE — remove `{ dto }` wrapper
-// src/Components/Api/Categoryapi.jsx
-create: (payload) => {
+  /**
+   * Create category - matches exactly the working Swagger payload structure
+   */
+  create: async (payload) => {
     const body = {
-    name: payload.name?.trim(),
-    code: payload.code?.trim() || undefined,
-    description: payload.description?.trim() || undefined,
-    imageUrl: payload.imageUrl || undefined,
-    parentCategoryId:
-      payload.parentCategoryId == null || payload.parentCategoryId === "0"
-        ? undefined
-        : Number(payload.parentCategoryId),
-    hasVariants: !!payload.hasVariants,
-    requiresSerialNumbers: !!payload.requiresSerialNumbers,
-    trackExpiration: !!payload.trackExpiration,
-    defaultUnitOfMeasure: payload.defaultUnitOfMeasure || undefined,
-    taxonomyPath: payload.taxonomyPath?.trim() || undefined,
-    hierarchyLevel: payload.hierarchyLevel,
-    subCategories: (payload.subCategories || [])
-      .filter(s => s.name?.trim())
-      .map(s => ({
-        name: s.name.trim(),
-        description: s.description?.trim() || undefined,
-      })),
-  };
+      name: (payload.name || "").trim() || null, // backend probably requires name
+      code: payload.code?.trim() ?? null,
+      description: payload.description?.trim() ?? null,
+      imageUrl: payload.imageUrl?.trim() ?? null,
+      parentCategoryId: payload.parentCategoryId ? Number(payload.parentCategoryId) : null,
+      hasVariants: !!payload.hasVariants,
+      requiresSerialNumbers: !!payload.requiresSerialNumbers,
+      trackExpiration: !!payload.trackExpiration,
+      defaultUnitOfMeasure: payload.defaultUnitOfMeasure?.trim() ?? null,
+      taxonomyPath: payload.taxonomyPath?.trim() ?? null,
+      hierarchyLevel: Number(payload.hierarchyLevel) || 1,
+      subCategories: null, // ← important: null, not [] or undefined
+    };
 
-  console.log("CREATE PAYLOAD:", body); // confirm camelCase + name present
-  return axiosInstance.post("/Category/create", body).then(unwrap);
-},
+    // Log the exact payload being sent (very useful for debugging)
+    console.log("Creating category with payload:", JSON.stringify(body, null, 2));
 
-update: (id, payload) => {
+    const res = await axiosInstance.post("/Category/create", body);
+    return unwrap(res);
+  },
+
+  /**
+   * Update category - safer handling of parentId
+   */
+  update: async (id, payload) => {
     const body = {
-    name: payload.name?.trim(),
-    code: payload.code?.trim() || undefined,
-    description: payload.description?.trim() || undefined,
-    imageUrl: payload.imageUrl || undefined,
-    parentCategoryId:
-      payload.parentCategoryId == null || payload.parentCategoryId === "0"
-        ? undefined
-        : Number(payload.parentCategoryId),
-    hasVariants: !!payload.hasVariants,
-    requiresSerialNumbers: !!payload.requiresSerialNumbers,
-    trackExpiration: !!payload.trackExpiration,
-    defaultUnitOfMeasure: payload.defaultUnitOfMeasure || undefined,
-    taxonomyPath: payload.taxonomyPath?.trim() || undefined,
-    hierarchyLevel: payload.hierarchyLevel,
-    subCategories: (payload.subCategories || [])
-      .filter(s => s.name?.trim())
-      .map(s => ({
-        name: s.name.trim(),
-        description: s.description?.trim() || undefined,
-      })),
-  };
+      name: (payload.name || "").trim() || null,
+      code: payload.code?.trim() ?? null,
+      description: payload.description?.trim() ?? null,
+      imageUrl: payload.imageUrl?.trim() ?? null,
+      // Very important: null for no parent, never send 0
+      parentCategoryId: payload.parentCategoryId ? Number(payload.parentCategoryId) : null,
+      hasVariants: !!payload.hasVariants,
+      requiresSerialNumbers: !!payload.requiresSerialNumbers,
+      trackExpiration: !!payload.trackExpiration,
+      defaultUnitOfMeasure: payload.defaultUnitOfMeasure?.trim() ?? null,
+      taxonomyPath: payload.taxonomyPath?.trim() ?? null,
+      hierarchyLevel: Number(payload.hierarchyLevel) || 1,
+      subCategories: null, // ← keep consistent with create
+    };
 
-  return axiosInstance.put(`/Category/update/${id}`, body).then(unwrap);
-},
+    console.log(`Updating category ${id} with payload:`, JSON.stringify(body, null, 2));
 
+    const res = await axiosInstance.put(`/Category/update/${id}`, body);
+    return unwrap(res);
+  },
 
-  remove: (id, config = {}) => axiosInstance.delete(`/Category/delete/${id}`, config).then(unwrap),
+  remove: async (id, config = {}) => {
+    const res = await axiosInstance.delete(`/Category/delete/${id}`, config);
+    return unwrap(res);
+  },
 };
 
 export default CategoryService;
-
