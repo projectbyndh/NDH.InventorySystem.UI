@@ -46,7 +46,7 @@ const useCategoryStore = create((set, get) => ({
   deleteCategory: async (id, config = {}) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return CategoryService.remove(id, config);
+    return CategoryService.delete(id, config);
   },
 }));
 

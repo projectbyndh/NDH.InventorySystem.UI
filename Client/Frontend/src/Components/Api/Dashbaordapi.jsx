@@ -15,7 +15,7 @@ const unwrap = (res) => {
 // Use relative path WITHOUT leading /api
 export const fetchDashboardCounts = async () => {
   try {
-    const res = await axiosInstance.get("/DashBoard/counts"); // ← No /api
+    const res = await axiosInstance.get("/api/Dashboard/counts"); // ← Normalized casing
     return unwrap(res);
   } catch (error) {
     console.error("Dashboard API Error:", error.response || error);
@@ -23,5 +23,5 @@ export const fetchDashboardCounts = async () => {
   }
 };
 
-const DashboardService = { fetchDashboardCounts };
+const DashboardService = { fetchDashboardCounts, getCounts: fetchDashboardCounts };
 export default DashboardService;

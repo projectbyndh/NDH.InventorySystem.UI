@@ -11,14 +11,14 @@ const unwrap = (res) => {
 
 const ProductService = {
   getAll: async ({ pageNumber = 1, pageSize = 20 } = {}) => {
-    const res = await axiosInstance.get("/Product/get-all", {
+    const res = await axiosInstance.get("/api/Product/get-all", {
       params: { PageNumber: pageNumber, PageSize: pageSize },
     });
     return unwrap(res);
   },
 
   getById: async (id) => {
-    const res = await axiosInstance.get(`/Product/get-by-id/${id}`);
+    const res = await axiosInstance.get(`/api/Product/get-by-id/${id}`);
     return unwrap(res);
   },
 
@@ -39,15 +39,15 @@ const ProductService = {
 
       SubCategoryId: payload.subCategoryId != null && !isNaN(Number(payload.subCategoryId))
         ? Number(payload.subCategoryId)
-        : 0,
+        : null,
 
       UnitOfMeasureId: payload.unitOfMeasureId != null && !isNaN(Number(payload.unitOfMeasureId))
         ? Number(payload.unitOfMeasureId)
-        : 0,
+        : null,
 
       PrimaryVendorId: payload.primaryVendorId != null && !isNaN(Number(payload.primaryVendorId))
         ? Number(payload.primaryVendorId)
-        : 0,
+        : null,
 
       Status: payload.status?.trim() || "Active",
       TrackInventory: !!payload.trackInventory,
@@ -69,11 +69,9 @@ const ProductService = {
       })).filter((a) => a.Name && a.Value),
     };
 
-    const body = { dto };
+    console.log("Creating product – final payload:", JSON.stringify(dto, null, 2));
 
-    console.log("Creating product – final payload (lowercase):", JSON.stringify(body, null, 2));
-
-    const res = await axiosInstance.post("/Product/create", body);
+    const res = await axiosInstance.post("/api/Product/create", dto);
     return unwrap(res);
   },
 
@@ -94,15 +92,15 @@ const ProductService = {
 
       SubCategoryId: payload.subCategoryId != null && !isNaN(Number(payload.subCategoryId))
         ? Number(payload.subCategoryId)
-        : 0,
+        : null,
 
       UnitOfMeasureId: payload.unitOfMeasureId != null && !isNaN(Number(payload.unitOfMeasureId))
         ? Number(payload.unitOfMeasureId)
-        : 0,
+        : null,
 
       PrimaryVendorId: payload.primaryVendorId != null && !isNaN(Number(payload.primaryVendorId))
         ? Number(payload.primaryVendorId)
-        : 0,
+        : null,
 
       Status: payload.status?.trim() || "Active",
       TrackInventory: !!payload.trackInventory,
@@ -126,16 +124,14 @@ const ProductService = {
       })).filter((a) => a.Name && a.Value),
     };
 
-    const body = { dto };
+    console.log(`Updating product ${id} – final payload:`, JSON.stringify(dto, null, 2));
 
-    console.log(`Updating product ${id} – final payload (PascalCase):`, JSON.stringify(body, null, 2));
-
-    const res = await axiosInstance.put(`/Product/update/${id}`, body);
+    const res = await axiosInstance.put(`/api/Product/update/${id}`, dto);
     return unwrap(res);
   },
 
-  remove: async (id) => {
-    const res = await axiosInstance.delete(`/Product/delete/${id}`);
+  delete: async (id) => {
+    const res = await axiosInstance.delete(`/api/Product/delete/${id}`);
     return unwrap(res);
   },
 };

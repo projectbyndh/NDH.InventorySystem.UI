@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client'
 import React from 'react'
 import './index.css'
 import App from './App.jsx'
-import ErrorBoundary from './Components/Ui/ErrorBoundary'
-import { showToast } from './Components/Ui/toast'
+import ErrorBoundary from './Components/Ui/ErrorBoundary.jsx'
+import { showToast } from './Components/Ui/toast.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

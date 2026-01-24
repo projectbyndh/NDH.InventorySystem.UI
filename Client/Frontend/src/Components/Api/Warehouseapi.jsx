@@ -8,18 +8,18 @@ const unwrap = (res) => {
 
 const WarehouseService = {
   getAll: (pagination) =>
-    axiosInstance.get("/Warehouse/getAll", { params: pagination }).then(unwrap),
+    axiosInstance.get("/api/Warehouse/getAll", { params: pagination }).then(unwrap),
 
   create: (payload) =>
-    axiosInstance.post("/Warehouse/create", payload).then(unwrap),
+    axiosInstance.post("/api/Warehouse/create", payload).then(unwrap),
 
   update: (id, payload) =>
-    axiosInstance.put(`/Warehouse/update/${id}`, payload).then(unwrap),
+    axiosInstance.put(`/api/Warehouse/update/${id}`, payload).then(unwrap),
 
   delete: (id) =>
-    axiosInstance.delete(`/Warehouse/delete/${id}`).then(unwrap),
+    axiosInstance.delete(`/api/Warehouse/delete/${id}`).then(unwrap),
   getById: (id) =>
-    axiosInstance.get(`/Warehouse/getById/${id}`).then(unwrap).catch(() => null),
+    axiosInstance.get(`/api/Warehouse/getById/${id}`).then(unwrap).catch(() => null),
 };
 
 export default WarehouseService;

@@ -3,7 +3,7 @@ import useLoginStore from "../Store/Loginstore";
 import { serverToast } from "../Ui/toast";
 
 const axiosInstance = axios.create({
-  baseURL: "https://api-inventory.ndhtechnologies.com/api",
+  baseURL: "https://api-inventory.ndhtechnologies.com",
   headers: { "Content-Type": "application/json", Accept: "application/json" },
   withCredentials: false,
 });
@@ -86,7 +86,7 @@ axiosInstance.interceptors.response.use(
         const { refreshToken } = useLoginStore.getState();
         if (!refreshToken) throw new Error("No refresh token");
 
-        const refreshRes = await axiosInstance.post("/Auth/refresh", { refreshToken });
+        const refreshRes = await axiosInstance.post("/api/Auth/refresh", { refreshToken });
 
         const payload = typeof refreshRes.data === "string"
           ? JSON.parse(refreshRes.data)

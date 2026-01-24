@@ -43,7 +43,7 @@ const useUnitOfMeasureStore = create((set) => ({
   deleteUnit: async (id) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return UnitOfMeasureService.remove(id);
+    return UnitOfMeasureService.delete(id);
   },
 }));
 

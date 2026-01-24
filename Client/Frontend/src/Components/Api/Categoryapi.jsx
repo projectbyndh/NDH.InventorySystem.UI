@@ -24,7 +24,7 @@ const unwrap = (res) => {
 
 const CategoryService = {
   getAll: async (pagination = { pageNumber: 1, pageSize: 50 }) => {
-    const res = await axiosInstance.get("/Category/getAll", {
+    const res = await axiosInstance.get("/api/Category/getAll", {
       params: {
         PageNumber: pagination.pageNumber ?? 1,
         PageSize: pagination.pageSize ?? 50,
@@ -34,7 +34,7 @@ const CategoryService = {
   },
 
   getById: async (id) => {
-    const res = await axiosInstance.get(`/Category/getById/${id}`);
+    const res = await axiosInstance.get(`/api/Category/getById/${id}`);
     return unwrap(res);
   },
 
@@ -60,7 +60,7 @@ const CategoryService = {
     // Log the exact payload being sent (very useful for debugging)
     console.log("Creating category with payload:", JSON.stringify(body, null, 2));
 
-    const res = await axiosInstance.post("/Category/create", body);
+    const res = await axiosInstance.post("/api/Category/create", body);
     return unwrap(res);
   },
 
@@ -86,12 +86,12 @@ const CategoryService = {
 
     console.log(`Updating category ${id} with payload:`, JSON.stringify(body, null, 2));
 
-    const res = await axiosInstance.put(`/Category/update/${id}`, body);
+    const res = await axiosInstance.put(`/api/Category/update/${id}`, body);
     return unwrap(res);
   },
 
-  remove: async (id, config = {}) => {
-    const res = await axiosInstance.delete(`/Category/delete/${id}`, config);
+  delete: async (id, config = {}) => {
+    const res = await axiosInstance.delete(`/api/Category/delete/${id}`, config);
     return unwrap(res);
   },
 };

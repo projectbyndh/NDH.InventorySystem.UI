@@ -68,7 +68,7 @@ const useProductStore = create((set, get) => ({
   deleteProduct: async (id) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return await ProductService.remove(id);
+    return await ProductService.delete(id);
   },
 
   clearProduct: () => set({ product: null }),

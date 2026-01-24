@@ -43,7 +43,7 @@ const useVendorStore = create((set) => ({
   deleteVendor: async (id) => {
     const token = useLoginStore.getState().token;
     if (!token) throw new Error("Not authenticated");
-    return VendorService.remove(id);
+    return VendorService.delete(id);
   },
 }));
 

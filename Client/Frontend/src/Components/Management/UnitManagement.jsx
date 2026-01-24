@@ -13,14 +13,14 @@ import {
   Trash2 as TrashIcon
 } from "lucide-react";
 import React from "react";
-import Spinner from "../Ui/Spinner";
-import { handleError } from "../Ui/errorHandler";
-import ActionButton from "../Ui/ActionButton";
-import FormButton from "../Ui/FormButton";
-import BackButton from "../Ui/BackButton";
-import IconActionButton from "../Ui/IconActionButton";
-import EmptyState from "../Ui/EmptyState";
-import Pagination from "../Ui/Pagination";
+import Spinner from "../Components/Ui/Spinner";
+import { handleError } from "../Components/Ui/errorHandler";
+import ActionButton from "../Components/Ui/ActionButton";
+import FormButton from "../Components/Ui/FormButton";
+import BackButton from "../Components/Ui/BackButton";
+import IconActionButton from "../Components/Ui/IconActionButton";
+import EmptyState from "../Components/Ui/EmptyState";
+
 import { Scale } from "lucide-react";
 export default function UnitOfMeasureManager() {
   const navigate = useNavigate();
@@ -395,16 +395,7 @@ export default function UnitOfMeasureManager() {
           )}
         </div>
 
-        {totalPages > 1 && (
-          <div className="mt-6 flex justify-center">
-            <Pagination
-              page={page}
-              pageCount={totalPages}
-              onPrev={() => setPage(p => Math.max(1, p - 1))}
-              onNext={() => setPage(p => Math.min(totalPages, p + 1))}
-            />
-          </div>
-        )}
+
       </div>
 
       {/* === CUSTOM DELETE MODAL === */}

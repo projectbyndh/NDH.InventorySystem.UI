@@ -7,18 +7,18 @@ const unwrap = (res) => {
 
 const VendorService = {
   getAll: (pagination) =>
-    axiosInstance.get("/Vendor/getAll", { params: pagination }).then(unwrap),
+    axiosInstance.get("/api/Vendor/getAll", { params: pagination }).then(unwrap),
 
   create: (payload) =>
-    axiosInstance.post("/Vendor/create", payload).then(unwrap),
+    axiosInstance.post("/api/Vendor/create", payload).then(unwrap),
 
   update: (id, payload) =>
-    axiosInstance.put(`/Vendor/update/${id}`, payload).then(unwrap),
+    axiosInstance.put(`/api/Vendor/update/${id}`, payload).then(unwrap),
 
-  remove: (id) =>
-    axiosInstance.delete(`/Vendor/delete/${id}`).then(unwrap),
+  delete: (id) =>
+    axiosInstance.delete(`/api/Vendor/delete/${id}`).then(unwrap),
   getById: (id) =>
-    axiosInstance.get(`/Vendor/getById/${id}`).then(unwrap).catch(() => null),
+    axiosInstance.get(`/api/Vendor/getById/${id}`).then(unwrap).catch(() => null),
 };
 
 export default VendorService;

@@ -17,7 +17,7 @@ const unwrap = (res) => {
 
 const UnitOfMeasureService = {
   getAll: async (pagination = { pageNumber: 1, pageSize: 50 }) => {
-    const res = await axiosInstance.get("/UnitOfMeasure/getAll", {
+    const res = await axiosInstance.get("/api/UnitOfMeasure/getAll", {
       params: {
         PageNumber: pagination.pageNumber ?? 1,
         PageSize: pagination.pageSize ?? 50,
@@ -26,7 +26,7 @@ const UnitOfMeasureService = {
     return unwrap(res);
   },
 
-  getById: (id) => axiosInstance.get(`/UnitOfMeasure/getById/${id}`).then(unwrap),
+  getById: (id) => axiosInstance.get(`/api/UnitOfMeasure/getById/${id}`).then(unwrap),
 
   create: (payload) => {
     const body = {
@@ -48,7 +48,7 @@ const UnitOfMeasureService = {
       throw new Error("Description too long (max 500)");
 
     console.log("UOM CREATE PAYLOAD:", body);
-    return axiosInstance.post("/UnitOfMeasure/create", body).then(unwrap);
+    return axiosInstance.post("/api/UnitOfMeasure/create", body).then(unwrap);
   },
 
   update: (id, payload) => {
@@ -66,10 +66,10 @@ const UnitOfMeasureService = {
     if (!body.symbol || body.symbol.length < 1 || body.symbol.length > 10)
       throw new Error("Symbol must be 1–10 characters");
 
-    return axiosInstance.put(`/UnitOfMeasure/update/${id}`, body).then(unwrap);
+    return axiosInstance.put(`/api/UnitOfMeasure/update/${id}`, body).then(unwrap);
   },
 
-  remove: (id) => axiosInstance.delete(`/UnitOfMeasure/delete/${id}`).then(unwrap),
+  delete: (id) => axiosInstance.delete(`/api/UnitOfMeasure/delete/${id}`).then(unwrap),
 };
 
 export default UnitOfMeasureService;

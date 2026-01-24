@@ -18,13 +18,13 @@ const unwrap = (res) => {
 
 const DropdownService = {
   getDistricts: () =>
-    axiosInstance.get("/Dropdown/getAll-districts").then(unwrap),
+    axiosInstance.get("/api/Dropdown/getAll-districts").then(unwrap),
 
   getMunicipalities: () =>
-    axiosInstance.get("/Dropdown/getAll-municipalities").then(unwrap),
+    axiosInstance.get("/api/Dropdown/getAll-municipalities").then(unwrap),
 
   getStateProvinces: () =>
-    axiosInstance.get("/Dropdown/getAll-stateProvince").then(unwrap),
+    axiosInstance.get("/api/Dropdown/getAll-stateProvince").then(unwrap),
 };
 
 export default DropdownService;

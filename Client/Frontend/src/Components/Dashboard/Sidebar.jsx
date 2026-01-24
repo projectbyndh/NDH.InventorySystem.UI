@@ -52,23 +52,22 @@ const ProfessionalSidebar = () => {
         title: "Dashboard",
         icon: LayoutDashboard,
         path: "/dashboard",
-        badge: null,
       },
       {
-        id: "vendor",
-        title: "Vendor",
+        id: "vendors",
+        title: "Vendors",
         icon: Warehouse,
         path: "/vendors",
       },
       {
-        id: "warehouse",
-        title: "Warehouse",
+        id: "warehouses",
+        title: "Warehouses",
         icon: Truck,
         path: "/warehouses",
       },
       {
-        id: "measurement",
-        title: "Unit of Measurement ",
+        id: "units",
+        title: "Units of Measure",
         icon: TrendingUp,
         path: "/units",
       },
@@ -84,10 +83,6 @@ const ProfessionalSidebar = () => {
         icon: Package,
         path: "/products",
       },
-
-
-
-
     ],
     [],
   );
