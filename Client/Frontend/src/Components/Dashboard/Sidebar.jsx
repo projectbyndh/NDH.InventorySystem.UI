@@ -54,36 +54,40 @@ const ProfessionalSidebar = () => {
         path: "/dashboard",
         badge: null,
       },
-      {
-        id: "products",
-        title: "Products",
-        icon: Package,
-        path: "inventory/product-crud",
+            {
+        id: "vendor",
+        title: "Vendor",
+        icon: Warehouse,
+        path: "/inventory/vendordetails",
       },
-      {
+            {
+        id: "warehouse",
+        title: "Warehouse",
+        icon: Truck,
+        path: "/inventory/warehouse",
+      },
+            {
+        id: "measurement",
+        title: "Unit of Measurement ",
+        icon: TrendingUp,
+        path: "/reports/measurement",
+      },
+            {
         id: "categories",
         title: "Categories",
         icon: Grid3X3,
         path: "/inventory/category-rdu",
       },
       {
-        id: "vendor",
-        title: "Vendor",
-        icon: Warehouse,
-        path: "/inventory/vendordetails",
+        id: "products",
+        title: "Products",
+        icon: Package,
+        path: "inventory/product-crud",
       },
-      {
-        id: "warehouse",
-        title: "Warehouse",
-        icon: Truck,
-        path: "/inventory/warehouse",
-      },
-      {
-        id: "measurement",
-        title: "Unit of Measurement ",
-        icon: TrendingUp,
-        path: "/reports/measurement",
-      },
+
+
+
+
     ],
     [],
   );
