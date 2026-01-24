@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import ProductService from "../Api/Productapi";
 import useLoginStore from "./Loginstore";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 
 const useProductStore = create((set, get) => ({
   products: [],

@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import CategoryService from "../Api/Categoryapi";
 import useLoginStore from "./Loginstore";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 
 const useCategoryStore = create((set, get) => ({
   categories: [],

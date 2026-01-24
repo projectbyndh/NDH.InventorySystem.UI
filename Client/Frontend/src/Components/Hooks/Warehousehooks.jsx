@@ -1,8 +1,8 @@
 // src/hooks/useWarehouse.jsx
 import { useState, useEffect, useCallback } from "react";
-import WarehouseService from "../Api/Warehouseapi";    
+import WarehouseService from "../Api/Warehouseapi";
 import useLoginStore from "../Store/Loginstore";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 
 export const useWarehouse = ({ pageSize = 10, autoFetch = true } = {}) => {
   const { token } = useLoginStore();

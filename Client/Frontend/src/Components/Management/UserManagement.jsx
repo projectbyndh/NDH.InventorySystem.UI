@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import FormButton from "../Ui/FormButton";
+import BackButton from "../Ui/BackButton";
 
 const required = <span className="text-red-500">*</span>;
 
@@ -88,9 +90,8 @@ function Select({ value, onChange, options, placeholder = "Choose one", classNam
                 onChange(o.value);
                 setOpen(false);
               }}
-              className={`px-3 py-2 cursor-pointer text-[15px] hover:bg-slate-50 ${
-                o.value === value ? "bg-slate-50" : ""
-              }`}
+              className={`px-3 py-2 cursor-pointer text-[15px] hover:bg-slate-50 ${o.value === value ? "bg-slate-50" : ""
+                }`}
             >
               {o.label}
             </li>
@@ -108,14 +109,12 @@ function Toggle({ checked, onChange }) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-        checked ? "bg-slate-900" : "bg-slate-300"
-      }`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${checked ? "bg-slate-900" : "bg-slate-300"
+        }`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
-          checked ? "translate-x-5" : "translate-x-1"
-        }`}
+        className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${checked ? "translate-x-5" : "translate-x-1"
+          }`}
       />
     </button>
   );
@@ -160,7 +159,7 @@ export default function UserManagementPage() {
       <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button className="hover:text-slate-900">← Back to User Management</button>
+            <BackButton showLabel label="Back to User Management" onClick={() => console.log("back")} />
             <span className="text-slate-300">/</span>
             <span className="hidden sm:inline">User Management</span>
             <span className="text-slate-300">/</span>
@@ -216,12 +215,20 @@ export default function UserManagementPage() {
 
             {/* Footer actions */}
             <div className="flex flex-wrap items-center gap-3">
-              <button className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black">
+              <FormButton
+                variant="primary"
+                onClick={() => console.log("save")}
+                className="!py-2 !px-6 !text-sm"
+              >
                 Save
-              </button>
-              <button className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              </FormButton>
+              <FormButton
+                variant="secondary"
+                onClick={() => console.log("reset")}
+                className="!py-2 !px-6 !text-sm"
+              >
                 Reset
-              </button>
+              </FormButton>
             </div>
           </div>
         </div>

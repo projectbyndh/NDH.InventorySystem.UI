@@ -1,39 +1,96 @@
 // src/components/ui/Button.jsx
 import React from "react";
+import Spinner from "./Spinner";
 
+/**
+ * Button - Enhanced global button component with multiple variants
+ * Use ActionButton for page-level actions, FormButton for form submissions
+ * This is for general-purpose buttons throughout the app
+ */
 const Button = ({
   children,
-  variant = "primary", // primary | secondary | danger
+  variant = "primary", // primary | secondary | danger | success | outline | ghost
   size = "md", // sm | md | lg
   onClick,
+  type = "button",
   disabled = false,
+  loading = false,
+  icon: Icon,
+  iconPosition = "left", // left | right
+  fullWidth = false,
   className = "",
 }) => {
-  const baseStyles =
-    "inline-flex items-center justify-center font-medium rounded-lg focus:outline-none transition-all duration-200";
+  const baseStyles = `
+    inline-flex items-center justify-center gap-2 font-semibold rounded-xl
+    focus:outline-none focus:ring-2 focus:ring-offset-2
+    transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+    active:scale-95
+    ${fullWidth ? "w-full" : ""}
+  `;
 
   const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-5 py-3 text-lg",
+    sm: "px-3 py-2 text-sm",
+    md: "px-4 py-2.5 text-base",
+    lg: "px-6 py-3.5 text-lg",
   };
 
   const variants = {
-    primary:
-      "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300",
-    secondary:
-      "bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100",
-    danger:
-      "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
+    primary: `
+      bg-slate-900 text-white shadow-md
+      hover:bg-black hover:shadow-lg
+      focus:ring-slate-500
+    `,
+    secondary: `
+      bg-slate-100 text-slate-900 shadow-sm
+      hover:bg-slate-200 hover:shadow-md
+      focus:ring-slate-300
+    `,
+    danger: `
+      bg-red-600 text-white shadow-md
+      hover:bg-red-700 hover:shadow-lg
+      focus:ring-red-500
+    `,
+    success: `
+      bg-emerald-600 text-white shadow-md
+      hover:bg-emerald-700 hover:shadow-lg
+      focus:ring-emerald-500
+    `,
+    outline: `
+      border-2 border-slate-300 text-slate-700 bg-white
+      hover:bg-slate-50 hover:border-slate-400
+      focus:ring-slate-300
+    `,
+    ghost: `
+      text-slate-700 hover:bg-slate-100
+      focus:ring-slate-300
+    `,
+  };
+
+  const iconSize = {
+    sm: "w-4 h-4",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
   };
 
   return (
     <button
-      className={`${baseStyles} ${sizes[size]} ${variants[variant]} ${className}`}
+      type={type}
+      className={`${baseStyles} ${sizes[size]} ${variants[variant]} ${className}`.trim()}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
     >
-      {children}
+      {loading ? (
+        <>
+          <Spinner size={iconSize[size].match(/\d+/)[0]} className="inline-block" />
+          <span>Loading...</span>
+        </>
+      ) : (
+        <>
+          {Icon && iconPosition === "left" && <Icon className={iconSize[size]} />}
+          {children}
+          {Icon && iconPosition === "right" && <Icon className={iconSize[size]} />}
+        </>
+      )}
     </button>
   );
 };

@@ -6,9 +6,7 @@ import useCategoryStore from "../Store/Categorystore";
 import useVendorStore from "../Store/Vendorstore";
 import useUnitOfMeasureStore from "../Store/Unitofmeasurement";
 import {
-  Plus,
   Trash2,
-  ChevronLeft,
   AlertCircle,
   CheckCircle,
   Package,
@@ -20,8 +18,12 @@ import {
   Layers,
   Settings,
 } from "lucide-react";
-import Spinner from "../UI/Spinner";
-import { handleError } from "../UI/errorHandler";
+import Spinner from "../Ui/Spinner";
+import { handleError } from "../Ui/errorHandler";
+import FormButton from "../Ui/FormButton";
+import BackButton from "../Ui/BackButton";
+import Button from "../Ui/Button";
+import IconActionButton from "../Ui/IconActionButton";
 
 export default function AddProduct() {
   const { id } = useParams();
@@ -277,12 +279,7 @@ export default function AddProduct() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-3 rounded-xl bg-white shadow hover:shadow-md transition-all hover:scale-105"
-            >
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
+            <BackButton onClick={() => navigate(-1)} />
             <div>
               <h1 className="text-3xl font-bold text-slate-900">
                 {isEdit ? "Edit Product" : "Add New Product"}
@@ -330,9 +327,8 @@ export default function AddProduct() {
                     <input
                       value={form.name}
                       onChange={(e) => handleChange("name", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                        errors.name ? "border-red-500" : "border-slate-300"
-                      } focus:ring-2 focus:ring-sky-500 transition-shadow`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.name ? "border-red-500" : "border-slate-300"
+                        } focus:ring-2 focus:ring-sky-500 transition-shadow`}
                       placeholder="Enter product name"
                       required
                     />
@@ -354,9 +350,8 @@ export default function AddProduct() {
                     <input
                       value={form.sku}
                       onChange={(e) => handleChange("sku", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                        errors.sku ? "border-red-500" : "border-slate-300"
-                      } focus:ring-2 focus:ring-sky-500 transition-shadow`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.sku ? "border-red-500" : "border-slate-300"
+                        } focus:ring-2 focus:ring-sky-500 transition-shadow`}
                       placeholder="e.g. PROD-001"
                       required
                     />
@@ -380,9 +375,8 @@ export default function AddProduct() {
                       step="0.01"
                       value={form.price}
                       onChange={(e) => handleChange("price", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                        errors.price ? "border-red-500" : "border-slate-300"
-                      } focus:ring-2 focus:ring-sky-500 transition-shadow`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${errors.price ? "border-red-500" : "border-slate-300"
+                        } focus:ring-2 focus:ring-sky-500 transition-shadow`}
                       placeholder="0.00"
                       required
                       min="0.01"
@@ -423,9 +417,8 @@ export default function AddProduct() {
                       handleChange("categoryId", val === "" ? "" : Number(val));
                     }}
                     required
-                    className={`w-full px-4 py-3 rounded-xl border appearance-none ${
-                      errors.categoryId ? "border-red-500 ring-2 ring-red-200" : "border-slate-300"
-                    } focus:ring-2 focus:ring-sky-500 transition-shadow bg-white`}
+                    className={`w-full px-4 py-3 rounded-xl border appearance-none ${errors.categoryId ? "border-red-500 ring-2 ring-red-200" : "border-slate-300"
+                      } focus:ring-2 focus:ring-sky-500 transition-shadow bg-white`}
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
                       backgroundPosition: "right 0.75rem center",
@@ -587,14 +580,13 @@ export default function AddProduct() {
                   <Layers className="w-6 h-6 text-slate-700" />
                   Product Variants
                 </h2>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={addVariant}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-sky-50 text-sky-700 rounded-xl text-sm font-medium hover:bg-sky-100 transition-all"
                 >
-                  <Plus className="w-4 h-4" />
                   Add Variant
-                </button>
+                </Button>
               </div>
 
               {form.variants.length === 0 ? (
@@ -605,13 +597,11 @@ export default function AddProduct() {
                     <div key={i} className="p-6 bg-slate-50 rounded-xl border border-slate-200">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-semibold text-slate-800">Variant {i + 1}</h4>
-                        <button
-                          type="button"
+                        <IconActionButton
+                          icon={Trash2}
+                          variant="delete"
                           onClick={() => removeVariant(i)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        />
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <input
@@ -668,14 +658,13 @@ export default function AddProduct() {
                   <Settings className="w-6 h-6 text-slate-700" />
                   Custom Attributes
                 </h2>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={addAttribute}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-sky-50 text-sky-700 rounded-xl text-sm font-medium hover:bg-sky-100 transition-all"
                 >
-                  <Plus className="w-4 h-4" />
                   Add Attribute
-                </button>
+                </Button>
               </div>
 
               {form.attributes.length === 0 ? (
@@ -696,13 +685,11 @@ export default function AddProduct() {
                         onChange={(e) => handleAttributeChange(i, "value", e.target.value)}
                         className="flex-1 px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500"
                       />
-                      <button
-                        type="button"
+                      <IconActionButton
+                        icon={Trash2}
+                        variant="delete"
                         onClick={() => removeAttribute(i)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      />
                     </div>
                   ))}
                 </div>
@@ -719,28 +706,23 @@ export default function AddProduct() {
 
             {/* Submit Buttons */}
             <div className="flex gap-4 pt-8 border-t">
-              <button
+              <FormButton
                 type="submit"
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="primary"
+                loading={loading}
+                loadingText="Saving..."
               >
-                {loading ? (
-                  <Spinner size={6} className="inline-block" />
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    {isEdit ? "Update Product" : "Create Product"}
-                  </>
-                )}
-              </button>
+                {isEdit ? "Update Product" : "Create Product"}
+              </FormButton>
 
-              <button
+              <FormButton
                 type="button"
+                variant="secondary"
                 onClick={() => navigate(-1)}
-                className="flex-1 border-2 border-slate-300 text-slate-700 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 transition-all"
+                disabled={loading}
               >
                 Cancel
-              </button>
+              </FormButton>
             </div>
           </form>
         </div>

@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import WarehouseService from "../Api/Warehouseapi"; // Fixed path
 import useLoginStore from "./Loginstore";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 
 const useWarehouseStore = create((set) => ({
   warehouses: [],

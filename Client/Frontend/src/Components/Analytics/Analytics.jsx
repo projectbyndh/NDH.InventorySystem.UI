@@ -5,7 +5,7 @@ import {
   Users, Package, Tags, Building2, Warehouse,
   AlertCircle
 } from "lucide-react";
-import Spinner from "../UI/Spinner";
+import Spinner from "../Ui/Spinner";
 
 const MetricCard = ({ icon: Icon, label, value, color }) => (
   <div className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-5 hover:shadow-xl transition-all transform hover:-translate-y-1">
@@ -70,11 +70,11 @@ export default function Dashboard() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          <MetricCard icon={Users}     label="Total Users"      value={data?.totalUsers}      color="bg-sky-600" />
-          <MetricCard icon={Tags}      label="Categories"       value={data?.totalCategories} color="bg-emerald-600" />
-          <MetricCard icon={Package}   label="Products"         value={data?.totalProducts}   color="bg-amber-600" />
-          <MetricCard icon={Building2} label="Vendors"          value={data?.totalVendors}    color="bg-purple-600" />
-          <MetricCard icon={Warehouse} label="Warehouses"       value={data?.totalWareHouses} color="bg-rose-600" />
+          <MetricCard icon={Users} label="Total Users" value={data?.totalUsers} color="bg-sky-600" />
+          <MetricCard icon={Tags} label="Categories" value={data?.totalCategories} color="bg-emerald-600" />
+          <MetricCard icon={Package} label="Products" value={data?.totalProducts} color="bg-amber-600" />
+          <MetricCard icon={Building2} label="Vendors" value={data?.totalVendors} color="bg-purple-600" />
+          <MetricCard icon={Warehouse} label="Warehouses" value={data?.totalWareHouses} color="bg-rose-600" />
         </div>
       </div>
     </div>

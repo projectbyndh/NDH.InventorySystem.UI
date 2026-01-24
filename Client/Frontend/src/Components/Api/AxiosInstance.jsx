@@ -1,11 +1,11 @@
 import axios from "axios";
 import useLoginStore from "../Store/Loginstore";
-import { serverToast } from "../UI/toast";
+import { serverToast } from "../Ui/toast";
 
 const axiosInstance = axios.create({
   baseURL: "https://api-inventory.ndhtechnologies.com/api",
   headers: { "Content-Type": "application/json", Accept: "application/json" },
-  withCredentials: false, 
+  withCredentials: false,
 });
 
 const isAuthFree = (url) =>
@@ -19,7 +19,7 @@ axiosInstance.interceptors.request.use((config) => {
   config.headers = config.headers || {};
 
   if (token && !isAuthFree(config.url)) {
-    config.headers.Authorization = `Bearer ${token}`; 
+    config.headers.Authorization = `Bearer ${token}`;
   } else {
     delete config.headers.Authorization;
   }
@@ -29,36 +29,36 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
   (res) => {
     try {
-        const cfg = res?.config || {};
-        const method = (cfg.method || "").toLowerCase();
-        const body = res?.data ?? res;
+      const cfg = res?.config || {};
+      const method = (cfg.method || "").toLowerCase();
+      const body = res?.data ?? res;
 
-        // Attempt to extract message, type/severity, duration from common shapes
-        const message =
-          body?._message ??
-          body?.message ??
-          (body?._data && (body._data._message || body._data.message)) ??
-          (typeof body === "string" ? body : undefined);
+      // Attempt to extract message, type/severity, duration from common shapes
+      const message =
+        body?._message ??
+        body?.message ??
+        (body?._data && (body._data._message || body._data.message)) ??
+        (typeof body === "string" ? body : undefined);
 
-        const providedType = body?.type || body?.severity || body?.level || (body?._data && (body._data.type || body._data.severity));
-        const providedDuration = body?.duration ?? body?.ttl ?? (body?._data && body._data.duration);
+      const providedType = body?.type || body?.severity || body?.level || (body?._data && (body._data.type || body._data.severity));
+      const providedDuration = body?.duration ?? body?.ttl ?? (body?._data && body._data.duration);
 
-        // Determine toast type: prefer server-provided, else success for 2xx mutating responses
-        let toastType = providedType || (res.status >= 200 && res.status < 300 ? "success" : "info");
+      // Determine toast type: prefer server-provided, else success for 2xx mutating responses
+      let toastType = providedType || (res.status >= 200 && res.status < 300 ? "success" : "info");
 
-        // Some APIs send a boolean `success` flag — if it's explicitly false treat as error
-        if (body && typeof body.success === "boolean" && body.success === false) {
-          toastType = "error";
+      // Some APIs send a boolean `success` flag — if it's explicitly false treat as error
+      if (body && typeof body.success === "boolean" && body.success === false) {
+        toastType = "error";
+      }
+
+      // show backend messages for non-GET mutating responses unless the
+      // request explicitly disabled server-toasts via `config.showToast === false`.
+      if (message && method !== "get") {
+        const dur = providedDuration ? Number(providedDuration) : 3500;
+        if (cfg.showToast !== false) {
+          serverToast(String(message), toastType, dur);
         }
-
-        // show backend messages for non-GET mutating responses unless the
-        // request explicitly disabled server-toasts via `config.showToast === false`.
-        if (message && method !== "get") {
-          const dur = providedDuration ? Number(providedDuration) : 3500;
-          if (cfg.showToast !== false) {
-            serverToast(String(message), toastType, dur);
-          }
-        }
+      }
     } catch {
       // ignore toast failures
     }

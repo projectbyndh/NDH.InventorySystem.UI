@@ -20,8 +20,12 @@ import {
   GripVertical,
 } from "lucide-react";
 import useProductStore from "../Store/Productstore";
-import Spinner from "../UI/Spinner";
-import { handleError } from "../UI/errorHandler";
+import Spinner from "../Ui/Spinner";
+import { handleError } from "../Ui/errorHandler";
+import ActionButton from "../Ui/ActionButton";
+import FormButton from "../Ui/FormButton";
+import BackButton from "../Ui/BackButton";
+import IconActionButton from "../Ui/IconActionButton";
 
 export default function ProductCRUD() {
   const {
@@ -229,13 +233,7 @@ export default function ProductCRUD() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex items-center gap-4">
-            <button
-              onClick={cancelForm}
-              className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all"
-              aria-label="Back"
-            >
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
+            <BackButton onClick={cancelForm} />
             <div>
               <h1 className="text-3xl font-bold text-slate-900">
                 {editingProduct ? "Edit Product" : "Add New Product"}
@@ -309,9 +307,8 @@ export default function ProductCRUD() {
                     value={form.name}
                     onChange={(e) => handleFormChange("name", e.target.value)}
                     placeholder="e.g. Wireless Mouse"
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      formErrors.name ? "border-red-500" : "border-slate-300"
-                    } focus:outline-none focus:ring-2 focus:ring-slate-500`}
+                    className={`w-full px-4 py-3 rounded-xl border ${formErrors.name ? "border-red-500" : "border-slate-300"
+                      } focus:outline-none focus:ring-2 focus:ring-slate-500`}
                   />
                   {formErrors.name && (
                     <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -356,9 +353,8 @@ export default function ProductCRUD() {
                       min="0"
                       value={form.price}
                       onChange={(e) => handleFormChange("price", e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                        formErrors.price ? "border-red-500" : "border-slate-300"
-                      } focus:outline-none focus:ring-2 focus:ring-slate-500`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${formErrors.price ? "border-red-500" : "border-slate-300"
+                        } focus:outline-none focus:ring-2 focus:ring-slate-500`}
                     />
                   </div>
                   {formErrors.price && (
@@ -434,30 +430,22 @@ export default function ProductCRUD() {
               )}
 
               <div className="flex gap-4 pt-6 border-t">
-                <button
+                <FormButton
                   type="submit"
-                  disabled={formLoading}
-                  className="flex-1 bg-slate-900 text-white py-3.5 rounded-xl font-semibold hover:bg-black disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md"
+                  variant="primary"
+                  loading={formLoading}
+                  loadingText="Saving..."
                 >
-                  {formLoading ? (
-                    <>
-                      <Spinner className="w-5 h-5" />
-                      Saving...
-                    </>
-                  ) : editingProduct ? (
-                    "Update Product"
-                  ) : (
-                    "Create Product"
-                  )}
-                </button>
-                <button
+                  {editingProduct ? "Update Product" : "Create Product"}
+                </FormButton>
+                <FormButton
                   type="button"
+                  variant="secondary"
                   onClick={cancelForm}
                   disabled={formLoading}
-                  className="flex-1 border border-slate-300 text-slate-700 py-3.5 rounded-xl font-semibold hover:bg-slate-50 disabled:opacity-50 transition-all"
                 >
                   Cancel
-                </button>
+                </FormButton>
               </div>
             </form>
           </div>
@@ -479,13 +467,9 @@ export default function ProductCRUD() {
             <h1 className="text-3xl font-bold text-slate-900">Products</h1>
             <p className="text-slate-600 mt-1">Manage all inventory products</p>
           </div>
-          <button
-            onClick={startCreate}
-            className="bg-slate-900 text-white px-5 py-3 rounded-xl font-medium hover:bg-black transition-all flex items-center gap-2 shadow-md"
-          >
-            <Plus className="w-5 h-5" />
+          <ActionButton onClick={startCreate}>
             Add Product
-          </button>
+          </ActionButton>
         </div>
 
         {/* Search */}
@@ -583,20 +567,18 @@ export default function ProductCRUD() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
+                          <IconActionButton
+                            icon={Edit2}
+                            variant="edit"
+                            ariaLabel="Edit"
                             onClick={() => startEdit(prod)}
-                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                            aria-label="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
+                          />
+                          <IconActionButton
+                            icon={Trash2}
+                            variant="delete"
+                            ariaLabel="Delete"
                             onClick={() => openDeleteModal(prod.id, prod.name)}
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                            aria-label="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -646,19 +628,21 @@ export default function ProductCRUD() {
               This action <span className="text-red-600 font-medium">cannot be undone</span>.
             </p>
             <div className="flex gap-3">
-              <button
+              <FormButton
+                variant="danger"
                 onClick={confirmDelete}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                loading={formLoading}
+                loadingText="Deleting..."
               >
-                {formLoading ? <Spinner className="w-5 h-5" /> : null}
                 Delete
-              </button>
-              <button
+              </FormButton>
+              <FormButton
+                variant="secondary"
                 onClick={closeDeleteModal}
-                className="flex-1 border border-slate-300 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+                disabled={formLoading}
               >
                 Cancel
-              </button>
+              </FormButton>
             </div>
           </div>
         </div>

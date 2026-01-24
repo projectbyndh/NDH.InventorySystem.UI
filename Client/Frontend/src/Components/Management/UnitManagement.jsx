@@ -2,9 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useUnitOfMeasureStore from "../Store/Unitofmeasurement"; // ← Keep if this is your actual path
-import { 
-  Plus, 
-  Edit2, 
+import {
+  Edit2,
   Trash2,
   Search,
   ChevronLeft,
@@ -14,8 +13,12 @@ import {
   Trash2 as TrashIcon
 } from "lucide-react";
 import React from "react";
-import Spinner from "../UI/Spinner";
-import { handleError } from "../UI/errorHandler";
+import Spinner from "../Ui/Spinner";
+import { handleError } from "../Ui/errorHandler";
+import ActionButton from "../Ui/ActionButton";
+import FormButton from "../Ui/FormButton";
+import BackButton from "../Ui/BackButton";
+import IconActionButton from "../Ui/IconActionButton";
 export default function UnitOfMeasureManager() {
   const navigate = useNavigate();
   const { units, fetchUnits, createUnit, updateUnit, deleteUnit } = useUnitOfMeasureStore();
@@ -177,13 +180,7 @@ export default function UnitOfMeasureManager() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8 flex items-center gap-4">
-            <button
-              onClick={cancelForm}
-              className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all"
-              aria-label="Back to list"
-            >
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
+            <BackButton onClick={cancelForm} label="Back to list" />
             <div>
               <h1 className="text-3xl font-bold text-slate-900">
                 {editingId ? "Edit Unit" : "Add New Unit"}
@@ -283,31 +280,22 @@ export default function UnitOfMeasureManager() {
               )}
 
               <div className="flex gap-4 pt-4">
-                <button
+                <FormButton
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-slate-900 text-white py-3.5 rounded-xl font-semibold
-                             hover:bg-black disabled:opacity-50 transition-all
-                             flex items-center justify-center gap-2 shadow-md"
+                  variant="primary"
+                  loading={loading}
+                  loadingText="Saving..."
                 >
-                  {loading ? (
-                    <>
-                      <Spinner className="w-5 h-5" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>{editingId ? "Update" : "Create"}</>
-                  )}
-                </button>
-                <button
+                  {editingId ? "Update" : "Create"}
+                </FormButton>
+                <FormButton
                   type="button"
+                  variant="secondary"
                   onClick={cancelForm}
                   disabled={loading}
-                  className="flex-1 border border-slate-300 text-slate-700 py-3.5 rounded-xl font-semibold
-                             hover:bg-slate-50 disabled:opacity-50 transition-all"
                 >
                   Cancel
-                </button>
+                </FormButton>
               </div>
             </form>
           </div>
@@ -325,14 +313,9 @@ export default function UnitOfMeasureManager() {
             <h1 className="text-3xl font-bold text-slate-900">Unit of Measure</h1>
             <p className="text-slate-600 mt-1">Manage all measurement units</p>
           </div>
-          <button
-            onClick={startCreate}
-            className="bg-slate-900 text-white px-5 py-3 rounded-xl font-medium
-                       hover:bg-black transition-all flex items-center gap-2 shadow-md"
-          >
-            <Plus className="w-5 h-5" />
+          <ActionButton onClick={startCreate}>
             Add Unit
-          </button>
+          </ActionButton>
         </div>
 
         {/* Search */}
@@ -386,20 +369,18 @@ export default function UnitOfMeasureManager() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
+                          <IconActionButton
+                            icon={Edit2}
+                            variant="edit"
                             onClick={() => startEdit(unit)}
-                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                            aria-label="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
+                            ariaLabel="Edit"
+                          />
+                          <IconActionButton
+                            icon={Trash2}
+                            variant="delete"
                             onClick={() => openDeleteModal(unit.id, unit.name)}
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                            aria-label="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                            ariaLabel="Delete"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -446,35 +427,26 @@ export default function UnitOfMeasureManager() {
             </div>
 
             <p className="text-slate-600 mb-6">
-              Are you sure you want to delete <strong>{deleteModal.name}</strong>? 
+              Are you sure you want to delete <strong>{deleteModal.name}</strong>?
               This action <span className="text-red-600 font-medium">cannot be undone</span>.
             </p>
 
             <div className="flex gap-3">
-              <button
+              <FormButton
+                variant="danger"
+                loading={loading}
+                loadingText="Deleting..."
                 onClick={confirmDelete}
-                disabled={loading}
-                className="flex-1 bg-red-600 text-white py-2.5 rounded-xl font-medium
-                           hover:bg-red-700 disabled:opacity-50 transition-all
-                           flex items-center justify-center gap-2"
               >
-                {loading ? (
-                  <>
-                    <Spinner className="w-4 h-4" />
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete"
-                )}
-              </button>
-              <button
+                Delete
+              </FormButton>
+              <FormButton
+                variant="secondary"
                 onClick={closeDeleteModal}
                 disabled={loading}
-                className="flex-1 border border-slate-300 text-slate-700 py-2.5 rounded-xl font-medium
-                           hover:bg-slate-50 disabled:opacity-50 transition-all"
               >
                 Cancel
-              </button>
+              </FormButton>
             </div>
           </div>
         </div>

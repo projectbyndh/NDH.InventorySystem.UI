@@ -5,9 +5,8 @@ import useLoginStore from "../Store/Loginstore";
 import VendorService from "../Api/VendorApi";
 import DropdownService from "../Api/Dropdown";
 import React from "react";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 import {
-  Plus,
   Edit2,
   Trash2,
   ChevronLeft,
@@ -22,12 +21,16 @@ import {
   Globe,
   Hash,
 } from "lucide-react";
-import SearchInput from "../UI/SearchInput";
-import Spinner from "../UI/Spinner";
-import ConfirmModal from "../UI/ConfirmModal";
-import TableWrapper from "../UI/TableWrapper";
-import EmptyState from "../UI/EmptyState";
-import Pagination from "../UI/Pagination";
+import SearchInput from "../Ui/SearchInput";
+import Spinner from "../Ui/Spinner";
+import ConfirmModal from "../Ui/ConfirmModal";
+import TableWrapper from "../Ui/TableWrapper";
+import EmptyState from "../Ui/EmptyState";
+import Pagination from "../Ui/Pagination";
+import ActionButton from "../Ui/ActionButton";
+import FormButton from "../Ui/FormButton";
+import BackButton from "../Ui/BackButton";
+import IconActionButton from "../Ui/IconActionButton";
 
 export default function VendorManager() {
   const navigate = useNavigate();
@@ -139,8 +142,8 @@ export default function VendorManager() {
         setMunicipalities(unwrap(mRes));
         setStateProvinces(unwrap(sRes));
       } catch (err) {
-          handleError(err, { title: "Failed to load dropdowns" });
-          setDropdownError(err?.message ?? "Failed to load dropdowns");
+        handleError(err, { title: "Failed to load dropdowns" });
+        setDropdownError(err?.message ?? "Failed to load dropdowns");
       } finally {
         setDropdownLoading(false);
       }
@@ -369,8 +372,8 @@ export default function VendorManager() {
         }, 800);
       }
     } catch (err) {
-        handleError(err, { title: "Save failed" });
-        setErrors({ submit: err?.message || "Save failed" });
+      handleError(err, { title: "Save failed" });
+      setErrors({ submit: err?.message || "Save failed" });
     } finally {
       setLoading(false);
     }
@@ -407,9 +410,7 @@ export default function VendorManager() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex items-center gap-4">
-            <button onClick={cancelForm} className="p-3 rounded-xl bg-white shadow-sm hover:shadow-md">
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
+            <BackButton onClick={cancelForm} />
             <div>
               <h1 className="text-3xl font-bold text-slate-900">
                 {editingId ? "Edit Vendor" : "Add New Vendor"}
@@ -735,31 +736,22 @@ export default function VendorManager() {
               )}
 
               <div className="flex gap-4 pt-8">
-                <button
+                <FormButton
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-slate-900 text-white py-3.5 rounded-xl font-bold text-lg
-                     hover:bg-black disabled:opacity-50 transition-all
-                     flex items-center justify-center gap-2 shadow-lg"
+                  variant="primary"
+                  loading={loading}
+                  loadingText="Saving..."
                 >
-                  {loading ? (
-                    <>
-                      <Spinner size={6} className="inline-block mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>{editingId ? "Update Vendor" : "Create Vendor"}</>
-                  )}
-                </button>
-                <button
+                  {editingId ? "Update Vendor" : "Create Vendor"}
+                </FormButton>
+                <FormButton
                   type="button"
+                  variant="secondary"
                   onClick={cancelForm}
                   disabled={loading}
-                  className="flex-1 border-2 border-slate-300 text-slate-700 py-3.5 rounded-xl font-bold text-lg
-                     hover:bg-slate-50 disabled:opacity-50 transition-all"
                 >
                   Cancel
-                </button>
+                </FormButton>
               </div>
             </form>
           </div>
@@ -777,14 +769,9 @@ export default function VendorManager() {
             <h1 className="text-3xl font-bold text-slate-900">Vendor Management</h1>
             <p className="text-slate-600 mt-1">Manage all your vendors</p>
           </div>
-          <button
-            onClick={startCreate}
-            className="bg-slate-900 text-white px-6 py-3.5 rounded-xl font-bold
-                       hover:bg-black transition-all flex items-center gap-2 shadow-lg"
-          >
-            <Plus className="w-6 h-6" />
+          <ActionButton onClick={startCreate}>
             Add Vendor
-          </button>
+          </ActionButton>
         </div>
 
         <div className="mb-6">
@@ -842,18 +829,20 @@ export default function VendorManager() {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
+                          <IconActionButton
+                            icon={Edit2}
+                            variant="edit"
+                            size="md"
                             onClick={() => startEdit(v)}
-                            className="p-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                          <button
+                            ariaLabel="Edit vendor"
+                          />
+                          <IconActionButton
+                            icon={Trash2}
+                            variant="delete"
+                            size="md"
                             onClick={() => setDeleteModal({ open: true, id: getId(v), name: v.name })}
-                            className="p-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                            ariaLabel="Delete vendor"
+                          />
                         </div>
                       </td>
                     </tr>

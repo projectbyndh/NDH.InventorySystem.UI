@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import UnitOfMeasureService from "../Api/Unitofmeasurement";
 import useLoginStore from "./Loginstore";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 
 const useUnitOfMeasureStore = create((set) => ({
   units: [],

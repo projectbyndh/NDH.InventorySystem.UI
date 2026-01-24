@@ -15,7 +15,10 @@ import {
 } from "lucide-react";
 import CategoryService from "../Api/Categoryapi";
 import useUnitOfMeasureStore from "../Store/Unitofmeasurement";
-import Spinner from "../UI/Spinner";
+import Spinner from "../Ui/Spinner";
+import FormButton from "../Ui/FormButton";
+import Button from "../Ui/Button";
+import IconActionButton from "../Ui/IconActionButton";
 
 const required = <span className="text-red-500">*</span>;
 
@@ -26,15 +29,15 @@ export default function CategoryForm({ initial = {}, onSaved, onCancel }) {
   const { units = [], fetchUnits, loading: unitsLoading } = useUnitOfMeasureStore();
 
   // ── Form state ───────────────────────────────────────────────────────────────
-  const [name, setName]                 = useState(initial.name ?? "");
-  const [code, setCode]                 = useState(initial.code ?? "");
-  const [description, setDescription]   = useState(initial.description ?? "");
-  const [imageUrl, setImageUrl]         = useState(initial.imageUrl ?? "");
-  const [preview, setPreview]           = useState(initial.imageUrl ?? "");
+  const [name, setName] = useState(initial.name ?? "");
+  const [code, setCode] = useState(initial.code ?? "");
+  const [description, setDescription] = useState(initial.description ?? "");
+  const [imageUrl, setImageUrl] = useState(initial.imageUrl ?? "");
+  const [preview, setPreview] = useState(initial.imageUrl ?? "");
   const [parentCategoryId, setParentCategoryId] = useState(
     initial.parentCategoryId != null ? String(initial.parentCategoryId) : ""
   );
-  const [hasVariants, setHasVariants]   = useState(!!initial.hasVariants);
+  const [hasVariants, setHasVariants] = useState(!!initial.hasVariants);
   const [requiresSerialNumbers, setRequiresSerialNumbers] = useState(
     !!initial.requiresSerialNumbers
   );
@@ -48,9 +51,9 @@ export default function CategoryForm({ initial = {}, onSaved, onCancel }) {
   );
 
   // ── UI state ─────────────────────────────────────────────────────────────────
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState("");
-  const [success, setSuccess]           = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [parentOptions, setParentOptions] = useState([
     { value: "", label: "None (Top-level / Root)" },
   ]);
@@ -386,13 +389,13 @@ export default function CategoryForm({ initial = {}, onSaved, onCancel }) {
               {preview ? (
                 <>
                   <img src={preview} alt="preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
+                  <IconActionButton
+                    icon={X}
+                    variant="delete"
+                    size="sm"
                     onClick={removeImage}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition"
-                  >
-                    <X size={16} />
-                  </button>
+                    className="absolute top-2 right-2 rounded-full !p-1.5"
+                  />
                 </>
               ) : (
                 <div className="text-center text-slate-400">
@@ -437,33 +440,26 @@ export default function CategoryForm({ initial = {}, onSaved, onCancel }) {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-slate-100">
-          <button
+          <FormButton
             type="submit"
-            disabled={loading}
-            className="flex-1 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
+            variant="primary"
+            loading={loading}
+            loadingText="Saving..."
+            className="flex-1"
           >
-            {loading ? (
-              <>
-                <Spinner className="w-5 h-5 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                {isEditing ? "Update Category" : "Create Category"}
-              </>
-            )}
-          </button>
+            {isEditing ? "Update Category" : "Create Category"}
+          </FormButton>
 
           {onCancel && (
-            <button
+            <FormButton
               type="button"
+              variant="secondary"
               onClick={onCancel}
               disabled={loading}
-              className="px-10 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition disabled:opacity-60"
+              className="px-10"
             >
               Cancel
-            </button>
+            </FormButton>
           )}
         </div>
 

@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import VendorService from "../Api/VendorApi";
 import useLoginStore from "./Loginstore";
-import { handleError } from "../UI/errorHandler";
+import { handleError } from "../Ui/errorHandler";
 
 const useVendorStore = create((set) => ({
   vendors: [],

@@ -15,7 +15,7 @@ import Analytics from "./Components/Analytics/Analytics";
 import LoginPage from "./Components/Authentication/Login";
 import Setting from "./Components/Settings/Setting";
 import VendorManager from "./Components/Inventory/VendorManager";
-import RouteNotifier from "./Components/UI/RouteNotifier";
+import RouteNotifier from "./Components/Ui/RouteNotifier";
 import ProtectedRoute from "./Components/Authentication/ProtectedRoute";
 import PublicOnlyRoute from "./Components/Authentication/PublicOnlyRoute";
 import CategoryCRUD from "./Components/Inventory/CategoryCRUD";
