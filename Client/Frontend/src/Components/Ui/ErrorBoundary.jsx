@@ -1,5 +1,6 @@
 import React from "react";
 import { showToast } from "./toast";
+import FormButton from "./FormButton";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -29,18 +30,20 @@ export default class ErrorBoundary extends React.Component {
             <h2 className="text-2xl font-bold mb-4 text-slate-900">Something went wrong</h2>
             <p className="text-slate-600 mb-6">An unexpected error occurred in the application. You can reload the page or contact support.</p>
             <div className="flex justify-center gap-3">
-              <button
-                className="px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold"
+              <FormButton
+                variant="primary"
                 onClick={() => window.location.reload()}
+                className="!w-auto px-8"
               >
                 Reload
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700"
+              </FormButton>
+              <FormButton
+                variant="secondary"
                 onClick={() => this.setState({ hasError: false, error: null })}
+                className="!w-auto px-8"
               >
                 Dismiss
-              </button>
+              </FormButton>
             </div>
           </div>
         </div>

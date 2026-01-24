@@ -785,14 +785,16 @@ export default function VendorManager() {
               <p className="text-slate-500">Loading vendors...</p>
             </div>
           ) : paginated.length === 0 ? (
-            <div className="p-16 text-center">
-              <EmptyState icon={<Building2 className="w-12 h-12 text-slate-400" />} title="No vendors found." subtitle="Try adjusting your search." />
-              <div className="mt-4">
-                <button onClick={startCreate} className="mt-4 text-slate-900 font-semibold hover:underline">
+            <EmptyState
+              icon={<Building2 className="w-12 h-12 text-slate-300" />}
+              title="No vendors found"
+              subtitle="Get started by adding your first vendor to the system."
+              action={
+                <ActionButton onClick={startCreate} size="sm">
                   Add your first vendor
-                </button>
-              </div>
-            </div>
+                </ActionButton>
+              }
+            />
           ) : (
             <TableWrapper>
               <table className="w-full">
@@ -853,25 +855,14 @@ export default function VendorManager() {
           )}
         </div>
 
-        {totalPages > 1 && !fetchLoading && (
-          <div className="mt-8 flex justify-center items-center gap-3">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-3 rounded-xl bg-white shadow hover:shadow-md disabled:opacity-50"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-slate-700 font-medium">
-              Page <strong>{page}</strong> of <strong>{totalPages}</strong>
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="p-3 rounded-xl bg-white shadow hover:shadow-md disabled:opacity-50"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <Pagination
+              page={page}
+              pageCount={totalPages}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            />
           </div>
         )}
       </div>

@@ -19,6 +19,8 @@ import ActionButton from "../Ui/ActionButton";
 import FormButton from "../Ui/FormButton";
 import BackButton from "../Ui/BackButton";
 import IconActionButton from "../Ui/IconActionButton";
+import EmptyState from "../Ui/EmptyState";
+import { Tag } from "lucide-react";
 
 export default function CategoryCRUD() {
   const {
@@ -424,15 +426,16 @@ export default function CategoryCRUD() {
               <p>Loading categories...</p>
             </div>
           ) : paginatedCategories.length === 0 ? (
-            <div className="p-12 text-center text-slate-500">
-              <p>No categories found.</p>
-              <button
-                onClick={startCreate}
-                className="mt-4 text-slate-900 font-medium hover:underline"
-              >
-                Create your first category
-              </button>
-            </div>
+            <EmptyState
+              icon={<Tag className="w-12 h-12 text-slate-300" />}
+              title="No categories found"
+              subtitle="Get started by organizing your products into categories."
+              action={
+                <ActionButton onClick={startCreate} size="sm">
+                  Create your first category
+                </ActionButton>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -483,24 +486,13 @@ export default function CategoryCRUD() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center items-center gap-3">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-2 rounded-lg hover:bg-white disabled:opacity-50"
-            >
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
-            <span className="text-sm text-slate-600">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="p-2 rounded-lg hover:bg-white disabled:opacity-50"
-            >
-              <ChevronRight className="w-5 h-5 text-slate-600" />
-            </button>
+          <div className="mt-6 flex justify-center">
+            <Pagination
+              page={page}
+              pageCount={totalPages}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            />
           </div>
         )}
       </div>

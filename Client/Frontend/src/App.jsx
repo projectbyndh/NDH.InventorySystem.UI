@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from "react";
 import "./index.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -47,87 +46,91 @@ function App() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
 
-          <Route path="master" element={<Master />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="analytics" element={<Analytics />} />
+          <Route
+            path="dashboard"
+            element={
+              <RouteNotifier name="Dashboard">
+                <Dashboard />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <RouteNotifier name="Analytics">
+                <Analytics />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="master"
+            element={
+              <RouteNotifier name="Product Master">
+                <Master />
+              </RouteNotifier>
+            }
+          />
 
           {/* Inventory */}
           <Route
-            path="inventory/products"
+            path="products"
             element={
               <RouteNotifier name="Products">
-                <Addproducts />
+                <ProductCRUD />
               </RouteNotifier>
             }
           />
           <Route
-            path="inventory/categories"
+            path="categories"
             element={
               <RouteNotifier name="Categories">
-                <AddCategory />
-              </RouteNotifier>
-            }
-          />
-          <Route
-            path="inventory/vendordetails"
-            element={
-              <RouteNotifier name="Vendor Manager">
-                <VendorManager />
-              </RouteNotifier>
-            }
-          />
-          <Route
-            path="inventory/warehouse"
-            element={
-              <RouteNotifier name="Warehouse">
-                <WareHouse />
-              </RouteNotifier>
-            }
-          />
-
-          {/* Reports */}
-          <Route
-            path="reports/measurement"
-            element={
-              <RouteNotifier name="Unit Management">
-                <UnitManagement />
-              </RouteNotifier>
-            }
-          />
-          <Route
-            path="reports/user-management"
-            element={
-              <RouteNotifier name="User Management">
-                <UserManagement />
-              </RouteNotifier>
-            }
-          />
-          <Route
-            path="reports/userprofile"
-            element={
-              <RouteNotifier name="User Profile">
-                <UserProfile />
-              </RouteNotifier>
-            }
-          />
-
-          {/* CATEGORY CRUD – FIXED PATH */}
-          <Route
-            path="inventory/category-rdu"
-            element={
-              <RouteNotifier name="Category CRUD">
                 <CategoryCRUD />
               </RouteNotifier>
             }
           />
           <Route
-            path="inventory/product-crud"
+            path="vendors"
             element={
-              <RouteNotifier name="Product CRUD">
-                <ProductCRUD />
+              <RouteNotifier name="Vendors">
+                <VendorManager />
               </RouteNotifier>
             }
           />
+          <Route
+            path="warehouses"
+            element={
+              <RouteNotifier name="Warehouses">
+                <WareHouse />
+              </RouteNotifier>
+            }
+          />
+
+          {/* Reports / Management */}
+          <Route
+            path="units"
+            element={
+              <RouteNotifier name="Units">
+                <UnitManagement />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <RouteNotifier name="Users">
+                <UserManagement />
+              </RouteNotifier>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <RouteNotifier name="Profile">
+                <UserProfile />
+              </RouteNotifier>
+            }
+          />
+
 
           {/* vendor details*/}
           <Route path="settings" element={<Setting />} />

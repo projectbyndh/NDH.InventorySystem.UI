@@ -26,6 +26,8 @@ import ActionButton from "../Ui/ActionButton";
 import FormButton from "../Ui/FormButton";
 import BackButton from "../Ui/BackButton";
 import IconActionButton from "../Ui/IconActionButton";
+import EmptyState from "../Ui/EmptyState";
+import { Package } from "lucide-react";
 
 export default function ProductCRUD() {
   const {
@@ -497,15 +499,16 @@ export default function ProductCRUD() {
               <p>Loading products...</p>
             </div>
           ) : paginatedProducts.length === 0 ? (
-            <div className="p-12 text-center text-slate-500">
-              <p>No products found.</p>
-              <button
-                onClick={startCreate}
-                className="mt-4 text-slate-900 font-medium hover:underline"
-              >
-                Create your first product
-              </button>
-            </div>
+            <EmptyState
+              icon={<Package className="w-12 h-12 text-slate-300" />}
+              title="No products found"
+              subtitle="Get started by adding your first product to the inventory."
+              action={
+                <ActionButton onClick={startCreate} size="sm">
+                  Create your first product
+                </ActionButton>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -591,24 +594,13 @@ export default function ProductCRUD() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center items-center gap-3">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-2 rounded-lg hover:bg-white disabled:opacity-50"
-            >
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
-            <span className="text-sm text-slate-600">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="p-2 rounded-lg hover:bg-white disabled:opacity-50"
-            >
-              <ChevronRight className="w-5 h-5 text-slate-600" />
-            </button>
+          <div className="mt-6 flex justify-center">
+            <Pagination
+              page={page}
+              pageCount={totalPages}
+              onPrev={() => setPage((p) => Math.max(1, p - 1))}
+              onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            />
           </div>
         )}
       </div>

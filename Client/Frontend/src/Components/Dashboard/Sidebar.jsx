@@ -40,7 +40,7 @@ const ProfessionalSidebar = () => {
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); 
+    handleResize();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -54,35 +54,35 @@ const ProfessionalSidebar = () => {
         path: "/dashboard",
         badge: null,
       },
-            {
+      {
         id: "vendor",
         title: "Vendor",
         icon: Warehouse,
-        path: "/inventory/vendordetails",
+        path: "/vendors",
       },
-            {
+      {
         id: "warehouse",
         title: "Warehouse",
         icon: Truck,
-        path: "/inventory/warehouse",
+        path: "/warehouses",
       },
-            {
+      {
         id: "measurement",
         title: "Unit of Measurement ",
         icon: TrendingUp,
-        path: "/reports/measurement",
+        path: "/units",
       },
-            {
+      {
         id: "categories",
         title: "Categories",
         icon: Grid3X3,
-        path: "/inventory/category-rdu",
+        path: "/categories",
       },
       {
         id: "products",
         title: "Products",
         icon: Package,
-        path: "inventory/product-crud",
+        path: "/products",
       },
 
 
@@ -159,10 +159,9 @@ const ProfessionalSidebar = () => {
           onClick={() => handleMenuClick(item.id, hasChildren)}
           className={`
             group relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-200
-            ${
-              isActive
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+            ${isActive
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
             }
             ${isChild ? "pl-6 text-gray-500 hover:text-gray-700" : ""}
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
@@ -184,11 +183,10 @@ const ProfessionalSidebar = () => {
             <span
               className={`
               inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium
-              ${
-                item.badge === "New"
+              ${item.badge === "New"
                   ? "bg-green-100 text-green-700"
                   : "bg-red-100 text-red-700"
-              }
+                }
               ${isActive ? "bg-white/30 text-white" : ""}
             `}
             >

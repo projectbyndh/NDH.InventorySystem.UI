@@ -19,6 +19,9 @@ import ActionButton from "../Ui/ActionButton";
 import FormButton from "../Ui/FormButton";
 import BackButton from "../Ui/BackButton";
 import IconActionButton from "../Ui/IconActionButton";
+import EmptyState from "../Ui/EmptyState";
+import Pagination from "../Ui/Pagination";
+import { Scale } from "lucide-react";
 export default function UnitOfMeasureManager() {
   const navigate = useNavigate();
   const { units, fetchUnits, createUnit, updateUnit, deleteUnit } = useUnitOfMeasureStore();
@@ -339,15 +342,16 @@ export default function UnitOfMeasureManager() {
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {paginatedUnits.length === 0 ? (
-            <div className="p-12 text-center">
-              <p className="text-slate-500">No units found.</p>
-              <button
-                onClick={startCreate}
-                className="mt-4 text-slate-900 font-medium hover:underline"
-              >
-                Create your first unit
-              </button>
-            </div>
+            <EmptyState
+              icon={<Scale className="w-12 h-12 text-slate-300" />}
+              title="No units found"
+              subtitle="Get started by defining your first unit of measurement."
+              action={
+                <ActionButton onClick={startCreate} size="sm">
+                  Create your first unit
+                </ActionButton>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -391,26 +395,14 @@ export default function UnitOfMeasureManager() {
           )}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center items-center gap-2">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-2 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-sm text-slate-600">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="p-2 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="mt-6 flex justify-center">
+            <Pagination
+              page={page}
+              pageCount={totalPages}
+              onPrev={() => setPage(p => Math.max(1, p - 1))}
+              onNext={() => setPage(p => Math.min(totalPages, p + 1))}
+            />
           </div>
         )}
       </div>

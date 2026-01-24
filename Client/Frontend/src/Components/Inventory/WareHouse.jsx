@@ -790,14 +790,16 @@ export default function WarehouseManager() {
               <Spinner className="mx-auto" size={12} />
             </div>
           ) : paginated.length === 0 ? (
-            <div className="p-16 text-center">
-              <EmptyState icon={<Building2 className="w-12 h-12 text-slate-400" />} title="No warehouses found." subtitle="Try adding your first warehouse." />
-              <div className="mt-4">
-                <button onClick={startCreate} className="mt-4 text-slate-900 font-semibold hover:underline">
+            <EmptyState
+              icon={<Building2 className="w-12 h-12 text-slate-300" />}
+              title="No warehouses found"
+              subtitle="Get started by adding your first storage facility."
+              action={
+                <ActionButton onClick={startCreate} size="sm">
                   Add your first warehouse
-                </button>
-              </div>
-            </div>
+                </ActionButton>
+              }
+            />
           ) : (
             <TableWrapper>
               <table className="w-full">

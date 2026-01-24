@@ -1,4 +1,9 @@
 import React, { useMemo, useState } from "react";
+import ActionButton from "../Ui/ActionButton";
+import BackButton from "../Ui/BackButton";
+import IconActionButton from "../Ui/IconActionButton";
+import EmptyState from "../Ui/EmptyState";
+import { Eye, Edit2, Search } from "lucide-react";
 
 // Sample data for products
 const sampleData = [
@@ -34,8 +39,8 @@ export default function Master() {
     const byCat = sampleData; // Replace with category filter when real categories are implemented
     const bySearch = search
       ? byCat.filter((r) =>
-          [r.name, r.code].some((f) => f.toLowerCase().includes(search.toLowerCase()))
-        )
+        [r.name, r.code].some((f) => f.toLowerCase().includes(search.toLowerCase()))
+      )
       : byCat;
     const sorted = [...bySearch].sort((a, b) => {
       const A = a[sortKey];
@@ -53,21 +58,7 @@ export default function Master() {
       {/* Sticky Header */}
       <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <button className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Back to Master
-          </button>
+          <BackButton showLabel label="Back to Master" onClick={() => console.log("back")} />
           <div className="flex items-center gap-4">
             <input
               type="text"
@@ -161,91 +152,112 @@ export default function Master() {
                   <option value="pr">Purchase Rate</option>
                   <option value="sr">Selling Rate</option>
                 </select>
-                <button
+                <ActionButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-                  className="rounded-xl border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
-                  title="Toggle sort direction"
                 >
                   {sortDir === "asc" ? "↑" : "↓"}
-                </button>
+                </ActionButton>
               </div>
             </div>
           </div>
 
           {/* Table */}
-          <div className="px-6 pb-6 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  {[
-                    "S.N",
-                    "Item Name",
-                    "Item Code",
-                    "Unit",
-                    "Purchase Rate",
-                    "Selling Rate",
-                    "VAT Included",
-                    "Action",
-                  ].map((header) => (
-                    <th
-                      key={header}
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50"
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filtered.map((row, idx) => (
-                  <tr key={row.code} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{idx + 1}.</td>
-                    <td className="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title={row.name}>
-                      {row.name}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.code}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.unit}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.pr.toFixed(2)}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.sr.toFixed(2)}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          row.vat ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                        }`}
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={<Search className="w-12 h-12 text-slate-300" />}
+              title="No products match your search"
+              subtitle="Try adjusting your filters or search query to find what you're looking for."
+            />
+          ) : (
+            <>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {[
+                      "S.N",
+                      "Item Name",
+                      "Item Code",
+                      "Unit",
+                      "Purchase Rate",
+                      "Selling Rate",
+                      "VAT Included",
+                      "Action",
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50"
                       >
-                        {row.vat ? "Yes" : "No"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">
-                      <div className="flex gap-2">
-                        <button className="inline-flex items-center gap-1 rounded-md bg-emerald-500 text-white px-3 py-1.5 text-xs font-medium shadow-sm hover:bg-emerald-600 focus:outline-none">
-                          View
-                        </button>
-                        <button className="inline-flex items-center gap-1 rounded-md bg-indigo-500 text-white px-3 py-1.5 text-xs font-medium shadow-sm hover:bg-indigo-600 focus:outline-none">
-                          Edit
-                        </button>
-                      </div>
-                    </td>
+                        {header}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filtered.map((row, idx) => (
+                    <tr key={row.code} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{idx + 1}.</td>
+                      <td className="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title={row.name}>
+                        {row.name}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.code}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.unit}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.pr.toFixed(2)}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.sr.toFixed(2)}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${row.vat ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                            }`}
+                        >
+                          {row.vat ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm">
+                        <div className="flex gap-2">
+                          <IconActionButton
+                            icon={Eye}
+                            variant="view"
+                            size="sm"
+                            onClick={() => console.log("view")}
+                          />
+                          <IconActionButton
+                            icon={Edit2}
+                            variant="edit"
+                            size="sm"
+                            onClick={() => console.log("edit")}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-gray-700">
-                Showing 1 to {filtered.length} of {sampleData.length} products
-              </span>
-              <div className="flex space-x-2">
-                <button className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">
-                  Previous
-                </button>
-                <button className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">
-                  Next
-                </button>
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-sm text-gray-700">
+                  Showing 1 to {filtered.length} of {sampleData.length} products
+                </span>
+                <div className="flex space-x-2">
+                  <ActionButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { }}
+                  >
+                    Previous
+                  </ActionButton>
+                  <ActionButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { }}
+                  >
+                    Next
+                  </ActionButton>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </section>
       </main>
     </div>

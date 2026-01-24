@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import useLoginStore from "../Store/Loginstore";
+import Spinner from "../Ui/Spinner";
 
 const ProtectedRoute = ({ children }) => {
   const token = useLoginStore((s) => s.token);
@@ -29,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
   if (!hydrated) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-600"></div>
+        <Spinner size={10} className="text-blue-600" />
       </div>
     );
   }

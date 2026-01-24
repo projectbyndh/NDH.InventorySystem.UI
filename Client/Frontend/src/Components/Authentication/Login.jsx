@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import useLoginHook from "../Hooks/Loginhooks";
 import useLoginStore from "../Store/Loginstore";
+import FormButton from "../Ui/FormButton";
 
 const LoginPage = () => {
   const { handleLogin, loading } = useLoginHook();
@@ -85,25 +86,16 @@ const LoginPage = () => {
             </div>
 
             {/* Submit */}
-            <button
+            <FormButton
               type="submit"
-              disabled={loading || !email || !password}
-              className="w-full py-3 px-4 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg 
-                       shadow-sm transition-all duration-200 flex items-center justify-center gap-2
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="primary"
+              disabled={!email || !password}
+              loading={loading}
+              loadingText="Signing in..."
+              className="w-full"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                "Sign in"
-              )}
-            </button>
+              Sign in
+            </FormButton>
           </form>
 
           {/* Footer Links */}
